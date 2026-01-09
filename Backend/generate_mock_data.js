@@ -46,16 +46,103 @@ const teams = [
     { id: '4', name: 'Hostel 4', members: generateMembers(7) }
 ];
 
-const schedule = [
-    { id: '1', sport: 'Cricket', teamA: 'Hostel 1', teamB: 'Hostel 2', date: '2025-10-15', time: '10:00 AM', venue: 'Main Ground', status: 'Upcoming' },
-    { id: '2', sport: 'Football', teamA: 'Hostel 3', teamB: 'Hostel 4', date: '2025-10-16', time: '04:00 PM', venue: 'Football Field', status: 'Upcoming' },
-    { id: '3', sport: 'Badminton', teamA: 'Hostel 1', teamB: 'Hostel 3', date: '2025-10-17', time: '09:00 AM', venue: 'Indoor Court', status: 'Upcoming' }
-];
+const sports = ['Cricket', 'Football', 'Badminton', 'Volleyball', 'Basketball', 'Table Tennis', 'Chess', 'Athletics', 'Squash', 'Tennis'];
+const venues = ['Main Ground', 'Football Field', 'Indoor Court', 'Volleyball Court', 'Basketball Court', 'TT Hall', 'Chess Room', 'Athletics Track', 'Squash Court', 'Tennis Court'];
 
-const results = [
-    { id: '1', sport: 'Volleyball', teamA: 'Hostel 2', teamB: 'Hostel 4', scoreA: '2', scoreB: '1', winner: 'Hostel 2', date: '2025-10-10', liveLink: '' },
-    { id: '2', sport: 'Basketball', teamA: 'Hostel 1', teamB: 'Hostel 3', scoreA: '45', scoreB: '40', winner: 'Hostel 1', date: '2025-10-12', liveLink: 'https://youtube.com/live/dummy' }
-];
+const generateSchedule = (count) => {
+    const schedule = [];
+    const startDate = new Date('2025-10-15');
+
+    for (let i = 1; i <= count; i++) {
+        const sportIndex = Math.floor(Math.random() * sports.length);
+        const sport = sports[sportIndex];
+        const venue = venues[sportIndex];
+
+        let teamAIndex = Math.floor(Math.random() * 4);
+        let teamBIndex = Math.floor(Math.random() * 4);
+        while (teamAIndex === teamBIndex) {
+            teamBIndex = Math.floor(Math.random() * 4);
+        }
+        const teamA = `Hostel ${teamAIndex + 1}`;
+        const teamB = `Hostel ${teamBIndex + 1}`;
+
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + Math.floor(Math.random() * 14));
+        const dateString = date.toISOString().split('T')[0];
+
+        const hour = 9 + Math.floor(Math.random() * 8);
+        const minute = Math.random() < 0.5 ? '00' : '30';
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour > 12 ? hour - 12 : hour;
+        const time = `${displayHour}:${minute} ${ampm}`;
+
+        schedule.push({
+            id: i.toString(),
+            sport,
+            teamA,
+            teamB,
+            date: dateString,
+            time,
+            venue,
+            status: 'Upcoming'
+        });
+    }
+    return schedule;
+};
+
+const schedule = generateSchedule(25);
+
+const generateResults = (count) => {
+    const results = [];
+    const startDate = new Date('2025-10-01');
+
+    for (let i = 1; i <= count; i++) {
+        const sportIndex = Math.floor(Math.random() * sports.length);
+        const sport = sports[sportIndex];
+
+        let teamAIndex = Math.floor(Math.random() * 4);
+        let teamBIndex = Math.floor(Math.random() * 4);
+        while (teamAIndex === teamBIndex) {
+            teamBIndex = Math.floor(Math.random() * 4);
+        }
+        const teamA = `Hostel ${teamAIndex + 1}`;
+        const teamB = `Hostel ${teamBIndex + 1}`;
+
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + Math.floor(Math.random() * 10));
+        const dateString = date.toISOString().split('T')[0];
+
+        let scoreA, scoreB;
+        if (['Cricket', 'Basketball'].includes(sport)) {
+            scoreA = Math.floor(Math.random() * 100) + 50;
+            scoreB = Math.floor(Math.random() * 100) + 50;
+        } else if (['Football', 'Volleyball', 'Tennis', 'Badminton', 'Table Tennis', 'Squash'].includes(sport)) {
+            scoreA = Math.floor(Math.random() * 5);
+            scoreB = Math.floor(Math.random() * 5);
+        } else {
+            scoreA = Math.floor(Math.random() * 10);
+            scoreB = Math.floor(Math.random() * 10);
+        }
+
+        const winner = scoreA > scoreB ? teamA : scoreB > scoreA ? teamB : 'Draw';
+
+        results.push({
+            id: i.toString(),
+            sport,
+            teamA,
+            teamB,
+            scoreA: scoreA.toString(),
+            scoreB: scoreB.toString(),
+            winner,
+            date: dateString,
+            liveLink: '',
+            streamStatus: 'Ended'
+        });
+    }
+    return results;
+};
+
+const results = generateResults(20);
 
 const standings = [
     {

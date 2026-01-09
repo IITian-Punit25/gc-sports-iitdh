@@ -1,5 +1,16 @@
 [
   {
+    "id": "1767996158897",
+    "sport": "Table Tennis",
+    "type": "Team",
+    "results": {
+      "first": "Hostel 1",
+      "second": "",
+      "third": "",
+      "fourth": ""
+    }
+  },
+  {
     "id": "1",
     "sport": "Cricket",
     "type": "Team",
@@ -16,15 +27,15 @@
     "type": "Standard",
     "results": {
       "first": "Hostel 3",
-      "second": "Hostel 4",
-      "third": "Hostel 1",
+      "second": "Hostel 1",
+      "third": "Hostel 4",
       "fourth": "Hostel 2"
     }
   },
   {
     "id": "3",
     "sport": "Yoga",
-    "type": "Standard",
+    "type": "Yoga",
     "results": {
       "first": "Hostel 2",
       "second": "Hostel 4",

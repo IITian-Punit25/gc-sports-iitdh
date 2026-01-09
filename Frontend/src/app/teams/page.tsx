@@ -8,12 +8,16 @@ import { io } from 'socket.io-client';
 export default function TeamsPage() {
     const [teams, setTeams] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
 
     const fetchTeams = async () => {
         try {
             const res = await fetch('http://localhost:5000/api/teams');
             const data = await res.json();
             setTeams(data);
+            if (data.length > 0 && !selectedTeamId) {
+                setSelectedTeamId(data[0].id);
+            }
             setLoading(false);
         } catch (error) {
             console.error('Error fetching teams:', error);
@@ -42,6 +46,8 @@ export default function TeamsPage() {
         };
     }, []);
 
+    const selectedTeam = teams.find(t => t.id === selectedTeamId);
+
     return (
         <div className="min-h-screen bg-background text-foreground">
             <Navbar />
@@ -58,32 +64,61 @@ export default function TeamsPage() {
                 {loading ? (
                     <div className="text-center text-slate-400 py-12">Loading teams...</div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {teams.map((team) => (
-                            <div
-                                key={team.id}
-                                className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden hover:border-primary/50 transition-all group"
-                            >
-                                <div className="bg-gradient-to-r from-primary/20 to-transparent px-8 py-6 border-b border-white/10">
-                                    <h2 className="text-2xl font-bold text-white group-hover:text-primary transition-colors">{team.name}</h2>
-                                    <p className="text-slate-400 text-sm">{team.members.length} members</p>
+                    <div className="max-w-4xl mx-auto">
+                        {/* Team Selector */}
+                        <div className="mb-8 flex justify-center">
+                            <div className="relative w-full max-w-md">
+                                <select
+                                    value={selectedTeamId || ''}
+                                    onChange={(e) => setSelectedTeamId(e.target.value)}
+                                    className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary focus:outline-none appearance-none cursor-pointer text-lg font-bold text-center"
+                                >
+                                    {teams.map((team) => (
+                                        <option key={team.id} value={team.id} className="bg-[#1a1a1a]">
+                                            {team.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-400">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
                                 </div>
-                                <div className="p-6">
-                                    <div className="space-y-3">
-                                        {team.members.map((member: any, idx: number) => (
+                            </div>
+                        </div>
+
+                        {/* Selected Team Members */}
+                        {selectedTeam && (
+                            <div className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 overflow-hidden">
+                                <div className="bg-gradient-to-r from-primary/20 to-transparent px-8 py-8 border-b border-white/10 text-center">
+                                    <h2 className="text-3xl font-black text-white mb-2">{selectedTeam.name}</h2>
+                                    <p className="text-slate-400">{selectedTeam.members.length} Members</p>
+                                </div>
+                                <div className="p-8">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {selectedTeam.members.map((member: any, idx: number) => (
                                             <div
                                                 key={idx}
-                                                className="flex items-center justify-between py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors border border-white/5"
+                                                className="flex items-center justify-between p-4 rounded-xl bg-black/20 hover:bg-white/5 transition-colors border border-white/5 group"
                                             >
-                                                <div>
-                                                    <div className="font-bold text-slate-200 flex items-center gap-2">
-                                                        {member.name}
-                                                        {member.isCaptain && (
-                                                            <Crown className="h-4 w-4 text-yellow-400" fill="currentColor" />
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg overflow-hidden ${member.isCaptain ? 'bg-yellow-500/20 text-yellow-500' : 'bg-white/10 text-slate-400'}`}>
+                                                        {member.image ? (
+                                                            <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            member.name.charAt(0)
                                                         )}
                                                     </div>
-                                                    <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
-                                                        {member.year} • {member.branch}
+                                                    <div>
+                                                        <div className="font-bold text-white flex items-center gap-2 text-lg">
+                                                            {member.name}
+                                                            {member.isCaptain && (
+                                                                <Crown className="h-4 w-4 text-yellow-500" fill="currentColor" />
+                                                            )}
+                                                        </div>
+                                                        <div className="text-xs text-slate-500 uppercase tracking-wider font-bold">
+                                                            {member.year} • {member.branch}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -91,7 +126,7 @@ export default function TeamsPage() {
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                        )}
                     </div>
                 )}
             </main>

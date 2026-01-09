@@ -114,12 +114,21 @@ export default function ContactPage() {
 
                             <div className="space-y-4">
                                 {contact.coordinators && contact.coordinators.map((coord: any, idx: number) => (
-                                    <div key={idx} className="p-6 bg-black/20 rounded-xl border border-white/5 hover:border-primary/30 transition-colors">
-                                        <div className="font-bold text-xl text-white mb-1">{coord.name}</div>
-                                        <div className="text-sm text-primary font-bold uppercase tracking-wider mb-4">{coord.role}</div>
-                                        <div className="flex items-center text-slate-400">
-                                            <Phone className="h-4 w-4 mr-3" />
-                                            {coord.phone}
+                                    <div key={idx} className="p-6 bg-black/20 rounded-xl border border-white/5 hover:border-primary/30 transition-colors flex items-center gap-6">
+                                        <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-primary/20 bg-white/5 flex-shrink-0">
+                                            <img
+                                                src={coord.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${coord.name}`}
+                                                alt={coord.name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-xl text-white mb-1">{coord.name}</div>
+                                            <div className="text-sm text-primary font-bold uppercase tracking-wider mb-2">{coord.role}</div>
+                                            <div className="flex items-center text-slate-400">
+                                                <Phone className="h-4 w-4 mr-2" />
+                                                {coord.phone}
+                                            </div>
                                         </div>
                                     </div>
                                 ))}

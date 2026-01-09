@@ -26,6 +26,7 @@ export default function ManageSchedule() {
     const [schedule, setSchedule] = useState<any[]>([]);
     const [teams, setTeams] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedMatchId, setSelectedMatchId] = useState<string>("");
     const router = useRouter();
 
     useEffect(() => {
@@ -44,6 +45,9 @@ export default function ManageSchedule() {
 
                 setSchedule(scheduleData);
                 setTeams(teamsData);
+                if (scheduleData.length > 0) {
+                    setSelectedMatchId(scheduleData[0].id);
+                }
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -55,6 +59,21 @@ export default function ManageSchedule() {
     }, [router]);
 
     const handleSave = async () => {
+        for (const match of schedule) {
+            if (!match.teamA || !match.teamB) {
+                alert("Both Team A and Team B must be selected for all matches.");
+                return;
+            }
+            if (match.teamA === match.teamB) {
+                alert("Team A and Team B cannot be the same.");
+                return;
+            }
+            if (!match.date || !match.time || !match.venue) {
+                alert("Date, Time, and Venue are required for all matches.");
+                return;
+            }
+        }
+
         await fetch('http://localhost:5000/api/schedule', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -64,10 +83,20 @@ export default function ManageSchedule() {
     };
 
     const addMatch = () => {
-        setSchedule([
-            ...schedule,
-            { id: Date.now().toString(), sport: 'Football', category: 'Men', teamA: teams[0]?.name || '', teamB: teams[1]?.name || '', date: '', time: '', venue: '' },
-        ]);
+        const newId = Date.now().toString();
+        const newMatch = {
+            id: newId,
+            sport: 'Football',
+            category: 'Men',
+            teamA: teams[0]?.name || '',
+            teamB: teams[1]?.name || '',
+            date: '',
+            time: '',
+            venue: ''
+        };
+
+        setSchedule([newMatch, ...schedule]);
+        setSelectedMatchId(newId);
     };
 
     const updateMatch = (index: number, field: string, value: string) => {
@@ -77,12 +106,22 @@ export default function ManageSchedule() {
     };
 
     const removeMatch = (index: number) => {
-        const newSchedule = [...schedule];
-        newSchedule.splice(index, 1);
-        setSchedule(newSchedule);
+        if (confirm('Are you sure you want to delete this match?')) {
+            const newSchedule = [...schedule];
+            newSchedule.splice(index, 1);
+            setSchedule(newSchedule);
+            if (newSchedule.length > 0) {
+                setSelectedMatchId(newSchedule[0].id);
+            } else {
+                setSelectedMatchId("");
+            }
+        }
     };
 
-    if (loading) return <div className="p-8 text-center text-slate-400">Loading...</div>;
+    if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-slate-400">Loading...</div>;
+
+    const selectedMatchIndex = schedule.findIndex(m => m.id === selectedMatchId);
+    const selectedMatch = schedule[selectedMatchIndex];
 
     return (
         <div className="min-h-screen bg-background text-foreground">
@@ -104,92 +143,124 @@ export default function ManageSchedule() {
                             onClick={handleSave}
                             className="bg-primary hover:bg-primary/90 text-black font-bold px-6 py-3 rounded-xl flex items-center transition-all shadow-lg shadow-primary/20"
                         >
-                            <Save className="h-5 w-5 mr-2" /> Save
+                            <Save className="h-5 w-5 mr-2" /> Save Changes
                         </button>
                     </div>
                 </div>
 
-                <div className="space-y-4">
-                    {schedule.map((match, index) => (
-                        <div key={match.id} className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10 flex flex-wrap gap-6 items-end hover:border-primary/30 transition-all">
-                            <div className="flex-1 min-w-[150px]">
-                                <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 block">Sport</label>
+                {/* Match Selection Dropdown */}
+                <div className="mb-8">
+                    <label className="text-sm text-slate-400 font-bold uppercase tracking-wider mb-2 block">Select Match to Edit</label>
+                    <select
+                        value={selectedMatchId}
+                        onChange={(e) => setSelectedMatchId(e.target.value)}
+                        className="w-full md:w-1/3 bg-black/40 border border-white/10 rounded-xl p-4 text-white focus:border-primary focus:outline-none appearance-none cursor-pointer text-lg font-medium"
+                    >
+                        <option value="" disabled>Select a Match</option>
+                        {schedule.map(match => (
+                            <option key={match.id} value={match.id} className="bg-slate-900">
+                                {match.sport} - {match.teamA} vs {match.teamB}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {selectedMatch ? (
+                    <div className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10 flex flex-col gap-6 relative group hover:border-white/20 transition-colors">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div>
+                                <label className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 block">Sport</label>
                                 <select
-                                    value={match.sport}
-                                    onChange={(e) => updateMatch(index, 'sport', e.target.value)}
+                                    value={selectedMatch.sport}
+                                    onChange={(e) => updateMatch(selectedMatchIndex, 'sport', e.target.value)}
                                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors appearance-none"
                                 >
                                     {SPORTS.map(s => <option key={s} value={s} className="bg-slate-900">{s}</option>)}
                                 </select>
                             </div>
-                            <div className="flex-1 min-w-[120px]">
-                                <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 block">Category</label>
+                            <div>
+                                <label className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 block">Category</label>
                                 <select
-                                    value={match.category || 'Men'}
-                                    onChange={(e) => updateMatch(index, 'category', e.target.value)}
+                                    value={selectedMatch.category || 'Men'}
+                                    onChange={(e) => updateMatch(selectedMatchIndex, 'category', e.target.value)}
                                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors appearance-none"
                                 >
                                     {CATEGORIES.map(c => <option key={c} value={c} className="bg-slate-900">{c}</option>)}
                                 </select>
                             </div>
-                            <div className="flex-1 min-w-[150px]">
-                                <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 block">Team A</label>
-                                <select
-                                    value={match.teamA}
-                                    onChange={(e) => updateMatch(index, 'teamA', e.target.value)}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors appearance-none"
-                                >
-                                    <option value="" className="bg-slate-900">Select Team</option>
-                                    {teams.map(t => <option key={t.id} value={t.name} className="bg-slate-900">{t.name}</option>)}
-                                </select>
-                            </div>
-                            <div className="flex-1 min-w-[150px]">
-                                <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 block">Team B</label>
-                                <select
-                                    value={match.teamB}
-                                    onChange={(e) => updateMatch(index, 'teamB', e.target.value)}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors appearance-none"
-                                >
-                                    <option value="" className="bg-slate-900">Select Team</option>
-                                    {teams.map(t => <option key={t.id} value={t.name} className="bg-slate-900">{t.name}</option>)}
-                                </select>
-                            </div>
-                            <div className="flex-1 min-w-[120px]">
-                                <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 block">Date</label>
+                            <div>
+                                <label className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 block">Date</label>
                                 <input
                                     type="date"
-                                    value={match.date}
-                                    onChange={(e) => updateMatch(index, 'date', e.target.value)}
+                                    value={selectedMatch.date}
+                                    onChange={(e) => updateMatch(selectedMatchIndex, 'date', e.target.value)}
                                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
                                 />
                             </div>
-                            <div className="flex-1 min-w-[100px]">
-                                <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 block">Time</label>
+                            <div>
+                                <label className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 block">Time</label>
                                 <input
                                     type="time"
-                                    value={match.time}
-                                    onChange={(e) => updateMatch(index, 'time', e.target.value)}
+                                    value={selectedMatch.time}
+                                    onChange={(e) => updateMatch(selectedMatchIndex, 'time', e.target.value)}
                                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
                                 />
                             </div>
-                            <div className="flex-1 min-w-[150px]">
-                                <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 block">Venue</label>
+                        </div>
+
+                        <div className="flex items-center gap-4 bg-black/20 p-4 rounded-xl border border-white/5">
+                            <div className="flex-1">
+                                <label className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 block">Team A</label>
+                                <select
+                                    value={selectedMatch.teamA}
+                                    onChange={(e) => updateMatch(selectedMatchIndex, 'teamA', e.target.value)}
+                                    className="w-full bg-transparent border-b border-white/10 p-2 text-white focus:border-primary focus:outline-none transition-colors text-lg font-medium appearance-none"
+                                >
+                                    <option value="" className="bg-slate-900">Select Team</option>
+                                    {teams.map(t => <option key={t.id} value={t.name} className="bg-slate-900">{t.name}</option>)}
+                                </select>
+                            </div>
+                            <div className="flex items-center justify-center px-4">
+                                <span className="text-slate-500 font-bold text-xl">VS</span>
+                            </div>
+                            <div className="flex-1 text-right">
+                                <label className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 block">Team B</label>
+                                <select
+                                    value={selectedMatch.teamB}
+                                    onChange={(e) => updateMatch(selectedMatchIndex, 'teamB', e.target.value)}
+                                    className="w-full bg-transparent border-b border-white/10 p-2 text-white focus:border-primary focus:outline-none transition-colors text-lg font-medium text-right appearance-none"
+                                    dir="rtl"
+                                >
+                                    <option value="" className="bg-slate-900">Select Team</option>
+                                    {teams.map(t => <option key={t.id} value={t.name} className="bg-slate-900">{t.name}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-between items-end">
+                            <div className="flex-1 max-w-md">
+                                <label className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 block">Venue</label>
                                 <input
-                                    value={match.venue}
-                                    onChange={(e) => updateMatch(index, 'venue', e.target.value)}
+                                    value={selectedMatch.venue}
+                                    onChange={(e) => updateMatch(selectedMatchIndex, 'venue', e.target.value)}
                                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
-                                    placeholder="Venue"
+                                    placeholder="e.g. Main Ground"
                                 />
                             </div>
                             <button
-                                onClick={() => removeMatch(index)}
-                                className="bg-red-500/10 text-red-500 p-3 rounded-xl hover:bg-red-500/20 border border-red-500/20 transition-all mb-[1px]"
+                                onClick={() => removeMatch(selectedMatchIndex)}
+                                className="p-3 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors flex items-center gap-2"
+                                title="Remove Match"
                             >
-                                <Trash className="h-5 w-5" />
+                                <Trash className="h-5 w-5" /> Delete Match
                             </button>
                         </div>
-                    ))}
-                </div>
+                    </div>
+                ) : (
+                    <div className="text-center py-12 text-slate-500 bg-white/5 rounded-2xl border border-white/10">
+                        {schedule.length === 0 ? "No matches scheduled. Click 'Add Match' to start." : "Select a match from the dropdown to edit."}
+                    </div>
+                )}
             </main>
         </div>
     );

@@ -1,11 +1,5 @@
 [
   {
-    "id": "1",
-    "title": "Football Match - Hostel 1 vs Hostel 2",
-    "url": "http://localhost:5000/uploads/1767943898887-881635116.png",
-    "type": "upload"
-  },
-  {
     "id": "2",
     "title": "Cricket Finals",
     "url": "https://placehold.co/600x400/1e293b/white?text=Cricket+Finals"

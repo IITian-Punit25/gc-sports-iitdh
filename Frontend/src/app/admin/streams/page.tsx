@@ -5,9 +5,25 @@ import Navbar from '@/components/Navbar';
 import { Save, Play, Link as LinkIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+const SPORTS = [
+    'Athletics',
+    'Badminton',
+    'Basketball',
+    'Chess',
+    'Cricket',
+    'Football',
+    'Squash',
+    'Table Tennis',
+    'Volleyball',
+    'Weightlifting',
+    'Powerlifting',
+    'Yoga'
+];
+
 export default function ManageStreams() {
     const [results, setResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedSport, setSelectedSport] = useState(SPORTS[0]);
     const router = useRouter();
 
     useEffect(() => {
@@ -31,13 +47,19 @@ export default function ManageStreams() {
         alert('Streams saved successfully!');
     };
 
-    const updateLiveLink = (index: number, field: string, value: string) => {
-        const newResults = [...results];
-        newResults[index][field] = value;
+    const updateLiveLink = (id: string, field: string, value: string) => {
+        const newResults = results.map(match => {
+            if (match.id === id) {
+                return { ...match, [field]: value };
+            }
+            return match;
+        });
         setResults(newResults);
     };
 
     if (loading) return <div className="p-8 text-center text-slate-400">Loading...</div>;
+
+    const filteredResults = results.filter(match => match.sport === selectedSport);
 
     return (
         <div className="min-h-screen bg-background text-foreground">
@@ -57,9 +79,25 @@ export default function ManageStreams() {
                     </button>
                 </div>
 
+                {/* Sport Selection Dropdown */}
+                <div className="mb-8">
+                    <label className="text-sm text-slate-400 font-bold uppercase tracking-wider mb-2 block">Filter by Sport</label>
+                    <select
+                        value={selectedSport}
+                        onChange={(e) => setSelectedSport(e.target.value)}
+                        className="w-full md:w-1/3 bg-black/40 border border-white/10 rounded-xl p-4 text-white focus:border-primary focus:outline-none appearance-none cursor-pointer text-lg font-medium"
+                    >
+                        {SPORTS.map(sport => (
+                            <option key={sport} value={sport} className="bg-slate-900">
+                                {sport}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
                 <div className="grid grid-cols-1 gap-6">
-                    {results.map((match, index) => (
-                        <div key={match.id || index} className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10 hover:border-primary/30 transition-all flex flex-col md:flex-row items-center gap-6">
+                    {filteredResults.map((match) => (
+                        <div key={match.id} className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10 hover:border-primary/30 transition-all flex flex-col md:flex-row items-center gap-6">
                             <div className="flex-1">
                                 <div className="flex items-center gap-3 mb-2">
                                     <span className="bg-primary/20 text-primary text-xs font-bold px-2 py-1 rounded uppercase">{match.sport}</span>
@@ -81,7 +119,7 @@ export default function ManageStreams() {
                                         </div>
                                         <input
                                             value={match.liveLink || ''}
-                                            onChange={(e) => updateLiveLink(index, 'liveLink', e.target.value)}
+                                            onChange={(e) => updateLiveLink(match.id, 'liveLink', e.target.value)}
                                             className="w-full bg-black/20 border border-white/10 rounded-lg pl-10 p-3 text-white focus:border-primary focus:outline-none transition-colors"
                                             placeholder="https://youtube.com/..."
                                         />
@@ -93,7 +131,7 @@ export default function ManageStreams() {
                                     </label>
                                     <select
                                         value={match.streamStatus || 'Ended'}
-                                        onChange={(e) => updateLiveLink(index, 'streamStatus', e.target.value)}
+                                        onChange={(e) => updateLiveLink(match.id, 'streamStatus', e.target.value)}
                                         className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none appearance-none cursor-pointer"
                                     >
                                         <option value="Ended" className="bg-black">Ended / Not Live</option>
@@ -104,9 +142,9 @@ export default function ManageStreams() {
                             </div>
                         </div>
                     ))}
-                    {results.length === 0 && (
+                    {filteredResults.length === 0 && (
                         <div className="text-center py-12 text-slate-500 bg-white/5 rounded-2xl border border-white/10">
-                            No matches found in results. Add matches in "Manage Results" first.
+                            No matches found for {selectedSport}.
                         </div>
                     )}
                 </div>

@@ -9,12 +9,23 @@ export default function ResultsPage() {
     const [loading, setLoading] = useState(true);
     const [standings, setStandings] = useState<any[]>([]);
 
+    const [selectedSport, setSelectedSport] = useState<string | null>(null);
+
     useEffect(() => {
         Promise.all([
             fetch('http://localhost:5000/api/results').then(res => res.json()),
             fetch('http://localhost:5000/api/standings').then(res => res.json())
         ]).then(([resultsData, standingsData]) => {
             setResults(resultsData);
+
+            // Auto-select first sport if none selected
+            if (resultsData.length > 0 && !selectedSport) {
+                const sports = Array.from(new Set(resultsData.map((m: any) => m.sport)));
+                if (sports.length > 0) {
+                    setSelectedSport(sports[0] as string);
+                }
+            }
+
             setStandings(calculateStandings(standingsData));
             setLoading(false);
         }).catch((err) => {
@@ -62,6 +73,10 @@ export default function ResultsPage() {
         });
     };
 
+    // Get unique sports
+    const sports = Array.from(new Set(results.map(m => m.sport)));
+    const filteredResults = results.filter(m => m.sport === selectedSport);
+
     return (
         <div className="min-h-screen bg-background text-foreground">
             <Navbar />
@@ -78,18 +93,41 @@ export default function ResultsPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Recent Results */}
                     <div className="lg:col-span-2 space-y-6">
-                        <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
-                            <Trophy className="h-6 w-6 text-primary mr-2" />
-                            Recent Results
-                        </h2>
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-2xl font-bold text-white flex items-center">
+                                <Trophy className="h-6 w-6 text-primary mr-2" />
+                                Recent Results
+                            </h2>
+
+                            {/* Sport Selector */}
+                            <div className="relative w-48">
+                                <select
+                                    value={selectedSport || ''}
+                                    onChange={(e) => setSelectedSport(e.target.value)}
+                                    className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer font-bold"
+                                >
+                                    {sports.map((sport: any) => (
+                                        <option key={sport} value={sport} className="bg-[#1a1a1a]">
+                                            {sport}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
                         {loading ? (
                             <div className="text-center py-12 text-slate-500">Loading results...</div>
-                        ) : results.length === 0 ? (
+                        ) : filteredResults.length === 0 ? (
                             <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
-                                <p className="text-slate-400">No results found yet.</p>
+                                <p className="text-slate-400">No results found for this sport.</p>
                             </div>
                         ) : (
-                            results.map((result: any) => (
+                            filteredResults.map((result: any) => (
                                 <div
                                     key={result.id}
                                     className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6 hover:border-primary/50 transition-all"

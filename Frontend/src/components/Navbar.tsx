@@ -62,7 +62,7 @@ export default function Navbar() {
                         {/* Desktop Navigation */}
                         <div className="hidden md:block">
                             <div className="ml-10 flex items-baseline space-x-1">
-                                {filteredLinks.map((link) => (
+                                {filteredLinks.map((link: any) => (
                                     <Link
                                         key={link.href}
                                         href={link.href}
@@ -95,7 +95,7 @@ export default function Navbar() {
                     {isOpen && (
                         <div className="md:hidden pb-4 bg-black/90 backdrop-blur-xl border-t border-white/10 absolute left-0 right-0 px-4 shadow-2xl">
                             <div className="flex flex-col space-y-2 pt-4">
-                                {filteredLinks.map((link) => (
+                                {filteredLinks.map((link: any) => (
                                     <Link
                                         key={link.href}
                                         href={link.href}

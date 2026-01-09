@@ -9,6 +9,7 @@ export default function ManageStandings() {
     const [standings, setStandings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [teams, setTeams] = useState<any[]>([]);
+    const [selectedEventId, setSelectedEventId] = useState<string>("");
     const router = useRouter();
 
     useEffect(() => {
@@ -21,6 +22,9 @@ export default function ManageStandings() {
         ]).then(([standingsData, teamsData]) => {
             setStandings(standingsData);
             setTeams(teamsData);
+            if (standingsData.length > 0) {
+                setSelectedEventId(standingsData[0].id);
+            }
             setLoading(false);
         }).catch((err) => {
             console.error("Failed to fetch data:", err);
@@ -30,6 +34,17 @@ export default function ManageStandings() {
     }, [router]);
 
     const handleSave = async () => {
+        for (const event of standings) {
+            if (!event.sport) {
+                alert("Sport Name is required for all events.");
+                return;
+            }
+            if (!event.results.first) {
+                alert(`Please select a First Place winner for ${event.sport}.`);
+                return;
+            }
+        }
+
         await fetch('http://localhost:5000/api/standings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -39,15 +54,16 @@ export default function ManageStandings() {
     };
 
     const addEvent = () => {
-        setStandings([
-            ...standings,
-            {
-                id: Date.now().toString(),
-                sport: '',
-                type: 'Team', // Standard, Team, Yoga
-                results: { first: '', second: '', third: '', fourth: '' }
-            },
-        ]);
+        const newId = Date.now().toString();
+        const newEvent = {
+            id: newId,
+            sport: '',
+            type: 'Team', // Standard, Team, Yoga
+            results: { first: '', second: '', third: '', fourth: '' }
+        };
+
+        setStandings([newEvent, ...standings]);
+        setSelectedEventId(newId);
     };
 
     const updateEvent = (index: number, field: string, value: any) => {
@@ -66,10 +82,18 @@ export default function ManageStandings() {
             const newStandings = [...standings];
             newStandings.splice(index, 1);
             setStandings(newStandings);
+            if (newStandings.length > 0) {
+                setSelectedEventId(newStandings[0].id);
+            } else {
+                setSelectedEventId("");
+            }
         }
     };
 
     if (loading) return <div className="p-8 text-center text-slate-400">Loading...</div>;
+
+    const selectedEventIndex = standings.findIndex(e => e.id === selectedEventId);
+    const selectedEvent = standings[selectedEventIndex];
 
     return (
         <div className="min-h-screen bg-background text-foreground">
@@ -98,72 +122,86 @@ export default function ManageStandings() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6">
-                    {standings.map((event, index) => (
-                        <div key={event.id || index} className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10 hover:border-primary/30 transition-all">
-                            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                                <div className="md:col-span-3 space-y-2">
-                                    <label className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sport Name</label>
-                                    <input
-                                        value={event.sport}
-                                        onChange={(e) => updateEvent(index, 'sport', e.target.value)}
-                                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none"
-                                        placeholder="e.g. Cricket"
-                                    />
-                                </div>
-                                <div className="md:col-span-2 space-y-2">
-                                    <label className="text-xs text-slate-400 font-bold uppercase tracking-wider">Type</label>
-                                    <select
-                                        value={event.type}
-                                        onChange={(e) => updateEvent(index, 'type', e.target.value)}
-                                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none appearance-none cursor-pointer"
-                                    >
-                                        <option value="Team">Team Sport</option>
-                                        <option value="Standard">Standard (Athletics)</option>
-                                        <option value="Yoga">Yoga</option>
-                                    </select>
-                                </div>
+                {/* Event Selection Dropdown */}
+                <div className="mb-8">
+                    <label className="text-sm text-slate-400 font-bold uppercase tracking-wider mb-2 block">Select Event to Edit</label>
+                    <select
+                        value={selectedEventId}
+                        onChange={(e) => setSelectedEventId(e.target.value)}
+                        className="w-full md:w-1/3 bg-black/40 border border-white/10 rounded-xl p-4 text-white focus:border-primary focus:outline-none appearance-none cursor-pointer text-lg font-medium"
+                    >
+                        <option value="" disabled>Select an Event</option>
+                        {standings.map(event => (
+                            <option key={event.id} value={event.id} className="bg-slate-900">
+                                {event.sport || 'New Event'}
+                            </option>
+                        ))}
+                    </select>
+                </div>
 
-                                <div className="md:col-span-6 grid grid-cols-2 md:grid-cols-4 gap-2">
-                                    {['first', 'second', 'third', 'fourth'].map((pos, i) => (
-                                        <div key={pos} className="space-y-2">
-                                            <label className="text-xs text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                                                {i === 0 && <Trophy className="h-3 w-3 text-yellow-400" />}
-                                                {i === 1 && <Trophy className="h-3 w-3 text-slate-400" />}
-                                                {i === 2 && <Trophy className="h-3 w-3 text-amber-700" />}
-                                                {i + 1}{i === 0 ? 'st' : i === 1 ? 'nd' : i === 2 ? 'rd' : 'th'}
-                                            </label>
-                                            <select
-                                                value={event.results[pos]}
-                                                onChange={(e) => updateEvent(index, `results.${pos}`, e.target.value)}
-                                                className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-sm text-white focus:border-primary focus:outline-none appearance-none cursor-pointer"
-                                            >
-                                                <option value="">Select</option>
-                                                {teams.map(t => (
-                                                    <option key={t.id} value={t.name}>{t.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    ))}
-                                </div>
+                {selectedEvent ? (
+                    <div className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10 hover:border-primary/30 transition-all">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                            <div className="md:col-span-3 space-y-2">
+                                <label className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sport Name</label>
+                                <input
+                                    value={selectedEvent.sport}
+                                    onChange={(e) => updateEvent(selectedEventIndex, 'sport', e.target.value)}
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none"
+                                    placeholder="e.g. Cricket"
+                                />
+                            </div>
+                            <div className="md:col-span-2 space-y-2">
+                                <label className="text-xs text-slate-400 font-bold uppercase tracking-wider">Type</label>
+                                <select
+                                    value={selectedEvent.type}
+                                    onChange={(e) => updateEvent(selectedEventIndex, 'type', e.target.value)}
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none appearance-none cursor-pointer"
+                                >
+                                    <option value="Team">Team Sport</option>
+                                    <option value="Standard">Standard (Athletics)</option>
+                                    <option value="Yoga">Yoga</option>
+                                </select>
+                            </div>
 
-                                <div className="md:col-span-1 flex justify-end pb-2">
-                                    <button
-                                        onClick={() => removeEvent(index)}
-                                        className="text-red-500 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors"
-                                    >
-                                        <Trash className="h-5 w-5" />
-                                    </button>
-                                </div>
+                            <div className="md:col-span-6 grid grid-cols-2 md:grid-cols-4 gap-2">
+                                {['first', 'second', 'third', 'fourth'].map((pos, i) => (
+                                    <div key={pos} className="space-y-2">
+                                        <label className="text-xs text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                                            {i === 0 && <Trophy className="h-3 w-3 text-yellow-400" />}
+                                            {i === 1 && <Trophy className="h-3 w-3 text-slate-400" />}
+                                            {i === 2 && <Trophy className="h-3 w-3 text-amber-700" />}
+                                            {i + 1}{i === 0 ? 'st' : i === 1 ? 'nd' : i === 2 ? 'rd' : 'th'}
+                                        </label>
+                                        <select
+                                            value={selectedEvent.results[pos]}
+                                            onChange={(e) => updateEvent(selectedEventIndex, `results.${pos}`, e.target.value)}
+                                            className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-sm text-white focus:border-primary focus:outline-none appearance-none cursor-pointer"
+                                        >
+                                            <option value="">Select</option>
+                                            {teams.map(t => (
+                                                <option key={t.id} value={t.name}>{t.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="md:col-span-1 flex justify-end pb-2">
+                                <button
+                                    onClick={() => removeEvent(selectedEventIndex)}
+                                    className="text-red-500 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors"
+                                >
+                                    <Trash className="h-5 w-5" />
+                                </button>
                             </div>
                         </div>
-                    ))}
-                    {standings.length === 0 && (
-                        <div className="text-center py-12 text-slate-500 bg-white/5 rounded-2xl border border-white/10">
-                            No events added. Click "Add Event" to start.
-                        </div>
-                    )}
-                </div>
+                    </div>
+                ) : (
+                    <div className="text-center py-12 text-slate-500 bg-white/5 rounded-2xl border border-white/10">
+                        {standings.length === 0 ? "No events added. Click 'Add Event' to start." : "Select an event from the dropdown to edit."}
+                    </div>
+                )}
             </main>
         </div>
     );

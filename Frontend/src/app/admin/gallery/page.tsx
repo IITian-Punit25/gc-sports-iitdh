@@ -24,18 +24,27 @@ export default function ManageGallery() {
     }, [router]);
 
     const handleSave = async () => {
+        const validGallery = gallery.filter(item => item.title && item.url);
+
+        if (validGallery.length < gallery.length) {
+            if (!confirm(`Some images have missing Title or URL and will be removed. Continue?`)) {
+                return;
+            }
+            setGallery(validGallery);
+        }
+
         await fetch('http://localhost:5000/api/gallery', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(gallery),
+            body: JSON.stringify(validGallery),
         });
         alert('Gallery saved successfully!');
     };
 
     const addImage = () => {
         setGallery([
-            ...gallery,
             { id: Date.now().toString(), title: '', url: '', type: 'url' }, // Added type: 'url' | 'upload'
+            ...gallery,
         ]);
     };
 
