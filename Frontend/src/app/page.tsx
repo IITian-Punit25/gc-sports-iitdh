@@ -1,14 +1,9 @@
+'use client';
+
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Trophy, Calendar, Medal, Image as ImageIcon, Users } from 'lucide-react';
-import Image from 'next/image';
-
-const STANDINGS = [
-  { id: '1', name: 'Hostel 1', points: 45, gold: 2, silver: 1, bronze: 3 },
-  { id: '2', name: 'Hostel 3', points: 38, gold: 1, silver: 2, bronze: 2 },
-  { id: '3', name: 'Hostel 2', points: 32, gold: 1, silver: 1, bronze: 2 },
-  { id: '4', name: 'Hostel 4', points: 28, gold: 0, silver: 2, bronze: 3 },
-];
+import { useState, useEffect } from 'react';
 
 const QUICK_LINKS = [
   { href: '/teams', label: 'View Teams', icon: Users },
@@ -18,6 +13,56 @@ const QUICK_LINKS = [
 ];
 
 export default function Home() {
+  const [standings, setStandings] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/standings')
+      .then(res => res.json())
+      .then(data => {
+        const calculated = calculateStandings(data);
+        setStandings(calculated);
+      });
+  }, []);
+
+  const calculateStandings = (events: any[]) => {
+    const scores: any = {};
+    // Initialize scores for known hostels (assuming 4 hostels)
+    ['Hostel 1', 'Hostel 2', 'Hostel 3', 'Hostel 4'].forEach(h => {
+      scores[h] = { name: h, points: 0, gold: 0, silver: 0, bronze: 0 };
+    });
+
+    events.forEach(event => {
+      const { type, results } = event;
+      let pointsMap = { first: 0, second: 0, third: 0, fourth: 0 };
+
+      if (type === 'Standard') pointsMap = { first: 20, second: 12, third: 8, fourth: 4 };
+      else if (type === 'Team') pointsMap = { first: 10, second: 6, third: 4, fourth: 2 };
+      else if (type === 'Yoga') pointsMap = { first: 5, second: 3, third: 2, fourth: 0 };
+
+      // Assign points
+      if (results.first && scores[results.first]) {
+        scores[results.first].points += pointsMap.first;
+        scores[results.first].gold += 1;
+      }
+      if (results.second && scores[results.second]) {
+        scores[results.second].points += pointsMap.second;
+        scores[results.second].silver += 1;
+      }
+      if (results.third && scores[results.third]) {
+        scores[results.third].points += pointsMap.third;
+        scores[results.third].bronze += 1;
+      }
+      if (results.fourth && scores[results.fourth]) {
+        scores[results.fourth].points += pointsMap.fourth;
+      }
+    });
+
+    return Object.values(scores).sort((a: any, b: any) => {
+      if (b.points !== a.points) return b.points - a.points;
+      return b.gold - a.gold; // Tie-breaker: Gold medals
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
@@ -28,18 +73,7 @@ export default function Home() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-primary/20 blur-[120px] rounded-full pointer-events-none" />
 
         <div className="max-w-7xl mx-auto text-center relative z-10">
-          <div className="flex justify-center mb-8">
-            <div className="relative w-40 h-40 md:w-56 md:h-56 animate-float">
-              <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
-              <Image
-                src="/logo.png"
-                alt="GC Logo"
-                fill
-                className="object-contain drop-shadow-2xl relative z-10"
-                priority
-              />
-            </div>
-          </div>
+
           <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60">
             General Championship <br />
             <span className="text-primary">2025-2026</span>
@@ -89,8 +123,8 @@ export default function Home() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {STANDINGS.map((team, index) => (
-                  <tr key={team.id} className="hover:bg-white/5 transition-colors group">
+                {standings.map((team, index) => (
+                  <tr key={team.name} className="hover:bg-white/5 transition-colors group">
                     <td className="px-8 py-6 font-bold text-white text-lg">
                       {index === 0 ? <span className="text-3xl">🏆</span> :
                         index === 1 ? <span className="text-2xl text-slate-300">🥈</span> :

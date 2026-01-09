@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
-import { Users } from 'lucide-react';
+import { Users, Crown } from 'lucide-react';
 import { io } from 'socket.io-client';
 
 export default function TeamsPage() {
@@ -76,7 +76,12 @@ export default function TeamsPage() {
                                                 className="flex items-center justify-between py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors border border-white/5"
                                             >
                                                 <div>
-                                                    <div className="font-bold text-slate-200">{member.name}</div>
+                                                    <div className="font-bold text-slate-200 flex items-center gap-2">
+                                                        {member.name}
+                                                        {member.isCaptain && (
+                                                            <Crown className="h-4 w-4 text-yellow-400" fill="currentColor" />
+                                                        )}
+                                                    </div>
                                                     <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
                                                         {member.year} • {member.branch}
                                                     </div>

@@ -1,22 +1,26 @@
 [
-    {
-        "id": "1",
-        "sport": "Volleyball",
-        "teamA": "Hostel 1",
-        "teamB": "Hostel 4",
-        "scoreA": 3,
-        "scoreB": 1,
-        "winner": "Hostel 1",
-        "date": "2026-01-10"
-    },
-    {
-        "id": "2",
-        "sport": "Table Tennis",
-        "teamA": "Hostel 2",
-        "teamB": "Hostel 3",
-        "scoreA": 2,
-        "scoreB": 3,
-        "winner": "Hostel 3",
-        "date": "2026-01-08"
-    }
+  {
+    "id": "1",
+    "sport": "Volleyball",
+    "teamA": "Hostel 2",
+    "teamB": "Hostel 4",
+    "scoreA": "2",
+    "scoreB": "1",
+    "winner": "Hostel 2",
+    "date": "2025-10-10",
+    "liveLink": "https://youtu.be/dB67yhFIn-8?si=8HRhBF-1hLC37cEt",
+    "streamStatus": "Live"
+  },
+  {
+    "id": "2",
+    "sport": "Basketball",
+    "teamA": "Hostel 1",
+    "teamB": "Hostel 3",
+    "scoreA": 6,
+    "scoreB": "40",
+    "winner": "Hostel 1",
+    "date": "2025-10-12",
+    "liveLink": "https://youtube.com/live/dummy",
+    "streamStatus": "Upcoming"
+  }
 ]

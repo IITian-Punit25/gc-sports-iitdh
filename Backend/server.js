@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const { Server } = require('socket.io');
+const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,6 +22,25 @@ const io = new Server(server, {
 
 app.use(cors());
 app.use(express.json());
+// Serve static files from public directory
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
+// Configure Multer for file uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const uploadDir = path.join(__dirname, 'public/uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ storage: storage });
 
 // Socket.io connection handler
 io.on('connection', (socket) => {
@@ -54,6 +74,14 @@ const saveData = (filename, data) => {
 };
 
 // API Routes
+app.post('/api/upload', upload.single('image'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+    const fileUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`;
+    res.json({ success: true, url: fileUrl });
+});
+
 app.get('/api/teams', (req, res) => {
     const teams = loadData('teams.json');
     res.json(teams);
@@ -121,6 +149,20 @@ app.post('/api/contact', (req, res) => {
         res.json({ success: true, message: 'Contact saved successfully' });
     } else {
         res.status(500).json({ success: false, message: 'Error saving contact' });
+    }
+});
+
+app.get('/api/standings', (req, res) => {
+    const standings = loadData('standings.json');
+    res.json(standings);
+});
+
+app.post('/api/standings', (req, res) => {
+    if (saveData('standings.json', req.body)) {
+        io.emit('dataUpdate', { type: 'standings' }); // Notify clients
+        res.json({ success: true, message: 'Standings saved successfully' });
+    } else {
+        res.status(500).json({ success: false, message: 'Error saving standings' });
     }
 });
 

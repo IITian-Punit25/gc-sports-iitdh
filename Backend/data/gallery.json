@@ -1,32 +1,23 @@
 [
-    {
-        "id": "1",
-        "title": "Football Match - Hostel 1 vs Hostel 2",
-        "url": "https://placehold.co/600x400/1e293b/white?text=Football+Match"
-    },
-    {
-        "id": "2",
-        "title": "Cricket Finals",
-        "url": "https://placehold.co/600x400/1e293b/white?text=Cricket+Finals"
-    },
-    {
-        "id": "3",
-        "title": "Basketball Tournament",
-        "url": "https://placehold.co/600x400/1e293b/white?text=Basketball"
-    },
-    {
-        "id": "4",
-        "title": "Badminton Championship",
-        "url": "https://placehold.co/600x400/1e293b/white?text=Badminton"
-    },
-    {
-        "id": "5",
-        "title": "Opening Ceremony",
-        "url": "https://placehold.co/600x400/1e293b/white?text=Opening+Ceremony"
-    },
-    {
-        "id": "6",
-        "title": "Prize Distribution",
-        "url": "https://placehold.co/600x400/1e293b/white?text=Prize+Distribution"
-    }
+  {
+    "id": "1",
+    "title": "Football Match - Hostel 1 vs Hostel 2",
+    "url": "http://localhost:5000/uploads/1767943898887-881635116.png",
+    "type": "upload"
+  },
+  {
+    "id": "2",
+    "title": "Cricket Finals",
+    "url": "https://placehold.co/600x400/1e293b/white?text=Cricket+Finals"
+  },
+  {
+    "id": "3",
+    "title": "Basketball Tournament",
+    "url": "https://placehold.co/600x400/1e293b/white?text=Basketball"
+  },
+  {
+    "id": "4",
+    "title": "Badminton Championship",
+    "url": "https://placehold.co/600x400/1e293b/white?text=Badminton"
+  }
 ]

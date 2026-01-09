@@ -1,0 +1,35 @@
+[
+  {
+    "id": "1",
+    "sport": "Cricket",
+    "type": "Team",
+    "results": {
+      "first": "Hostel 1",
+      "second": "Hostel 2",
+      "third": "Hostel 3",
+      "fourth": "Hostel 4"
+    }
+  },
+  {
+    "id": "2",
+    "sport": "100m Sprint",
+    "type": "Standard",
+    "results": {
+      "first": "Hostel 3",
+      "second": "Hostel 4",
+      "third": "Hostel 1",
+      "fourth": "Hostel 2"
+    }
+  },
+  {
+    "id": "3",
+    "sport": "Yoga",
+    "type": "Standard",
+    "results": {
+      "first": "Hostel 2",
+      "second": "Hostel 4",
+      "third": "Hostel 1",
+      "fourth": ""
+    }
+  }
+]

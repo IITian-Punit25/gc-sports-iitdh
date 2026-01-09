@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
-import { Save, Plus, Trash } from 'lucide-react';
+import { Save, Plus, Trash, Upload, Link as LinkIcon, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function ManageGallery() {
     const [gallery, setGallery] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
     const router = useRouter();
 
     useEffect(() => {
@@ -34,7 +35,7 @@ export default function ManageGallery() {
     const addImage = () => {
         setGallery([
             ...gallery,
-            { id: Date.now().toString(), title: '', url: '' },
+            { id: Date.now().toString(), title: '', url: '', type: 'url' }, // Added type: 'url' | 'upload'
         ]);
     };
 
@@ -48,6 +49,32 @@ export default function ManageGallery() {
         const newGallery = [...gallery];
         newGallery.splice(index, 1);
         setGallery(newGallery);
+    };
+
+    const handleFileUpload = async (index: number, file: File) => {
+        if (!file) return;
+
+        setUploading(prev => ({ ...prev, [index]: true }));
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+            const res = await fetch('http://localhost:5000/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await res.json();
+            if (data.success) {
+                updateImage(index, 'url', data.url);
+            } else {
+                alert('Upload failed');
+            }
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            alert('Error uploading file');
+        } finally {
+            setUploading(prev => ({ ...prev, [index]: false }));
+        }
     };
 
     if (loading) return <div className="p-8 text-center text-slate-400">Loading...</div>;
@@ -80,11 +107,13 @@ export default function ManageGallery() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {gallery.map((item, index) => (
                         <div key={item.id} className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10 hover:border-primary/30 transition-all">
-                            <div className="aspect-video bg-black/30 rounded-xl mb-6 overflow-hidden border border-white/5">
+                            <div className="aspect-video bg-black/30 rounded-xl mb-6 overflow-hidden border border-white/5 relative group">
                                 {item.url ? (
                                     <img src={item.url} alt={item.title} className="w-full h-full object-cover" />
                                 ) : (
-                                    <div className="flex items-center justify-center h-full text-slate-500 text-sm">No Image Preview</div>
+                                    <div className="flex items-center justify-center h-full text-slate-500 text-sm">
+                                        {uploading[index] ? <Loader2 className="h-6 w-6 animate-spin text-primary" /> : 'No Image Preview'}
+                                    </div>
                                 )}
                             </div>
                             <div className="space-y-4">
@@ -97,15 +126,51 @@ export default function ManageGallery() {
                                         placeholder="Image Title"
                                     />
                                 </div>
+
                                 <div>
-                                    <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 block">Image URL</label>
-                                    <input
-                                        value={item.url}
-                                        onChange={(e) => updateImage(index, 'url', e.target.value)}
-                                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
-                                        placeholder="https://..."
-                                    />
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="text-xs text-slate-400 font-bold uppercase tracking-wider block">Image Source</label>
+                                        <div className="flex bg-black/40 rounded-lg p-1 border border-white/10">
+                                            <button
+                                                onClick={() => updateImage(index, 'type', 'url')}
+                                                className={`px-2 py-1 rounded text-xs font-bold transition-all ${item.type !== 'upload' ? 'bg-primary text-black' : 'text-slate-400 hover:text-white'}`}
+                                            >
+                                                <LinkIcon className="h-3 w-3" />
+                                            </button>
+                                            <button
+                                                onClick={() => updateImage(index, 'type', 'upload')}
+                                                className={`px-2 py-1 rounded text-xs font-bold transition-all ${item.type === 'upload' ? 'bg-primary text-black' : 'text-slate-400 hover:text-white'}`}
+                                            >
+                                                <Upload className="h-3 w-3" />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {item.type === 'upload' ? (
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => e.target.files && handleFileUpload(index, e.target.files[0])}
+                                                className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+                                                disabled={uploading[index]}
+                                            />
+                                            {uploading[index] && (
+                                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+                                                    <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <input
+                                            value={item.url}
+                                            onChange={(e) => updateImage(index, 'url', e.target.value)}
+                                            className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
+                                            placeholder="https://..."
+                                        />
+                                    )}
                                 </div>
+
                                 <button
                                     onClick={() => removeImage(index)}
                                     className="w-full bg-red-500/10 text-red-500 p-3 rounded-xl hover:bg-red-500/20 border border-red-500/20 transition-all flex items-center justify-center font-bold"

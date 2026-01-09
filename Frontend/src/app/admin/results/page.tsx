@@ -24,6 +24,7 @@ const CATEGORIES = ['Men', 'Women', 'Mixed'];
 
 export default function ManageResults() {
     const [results, setResults] = useState<any[]>([]);
+    const [teams, setTeams] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
@@ -31,12 +32,26 @@ export default function ManageResults() {
         const token = localStorage.getItem('adminToken');
         if (!token) router.push('/admin/login');
 
-        fetch('http://localhost:5000/api/results')
-            .then((res) => res.json())
-            .then((data) => {
-                setResults(data);
+        const fetchData = async () => {
+            try {
+                const [resultsRes, teamsRes] = await Promise.all([
+                    fetch('http://localhost:5000/api/results'),
+                    fetch('http://localhost:5000/api/teams')
+                ]);
+
+                const resultsData = await resultsRes.json();
+                const teamsData = await teamsRes.json();
+
+                setResults(resultsData);
+                setTeams(teamsData);
                 setLoading(false);
-            });
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                setLoading(false);
+            }
+        };
+
+        fetchData();
     }, [router]);
 
     const handleSave = async () => {
@@ -51,7 +66,7 @@ export default function ManageResults() {
     const addResult = () => {
         setResults([
             ...results,
-            { id: Date.now().toString(), sport: 'Football', category: 'Men', teamA: '', teamB: '', scoreA: 0, scoreB: 0, winner: '', date: '', liveLink: '' },
+            { id: Date.now().toString(), sport: 'Football', category: 'Men', teamA: teams[0]?.name || '', teamB: teams[1]?.name || '', scoreA: 0, scoreB: 0, winner: '', date: '', liveLink: '' },
         ]);
     };
 
@@ -141,12 +156,14 @@ export default function ManageResults() {
                             <div className="flex items-center gap-4 bg-black/20 p-4 rounded-xl border border-white/5">
                                 <div className="flex-1">
                                     <label className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 block">Team A</label>
-                                    <input
+                                    <select
                                         value={result.teamA}
                                         onChange={(e) => updateResult(index, 'teamA', e.target.value)}
-                                        className="w-full bg-transparent border-b border-white/10 p-2 text-white focus:border-primary focus:outline-none transition-colors text-lg font-medium"
-                                        placeholder="Team Name"
-                                    />
+                                        className="w-full bg-transparent border-b border-white/10 p-2 text-white focus:border-primary focus:outline-none transition-colors text-lg font-medium appearance-none"
+                                    >
+                                        <option value="" className="bg-slate-900">Select Team</option>
+                                        {teams.map(t => <option key={t.id} value={t.name} className="bg-slate-900">{t.name}</option>)}
+                                    </select>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <input
@@ -165,24 +182,31 @@ export default function ManageResults() {
                                 </div>
                                 <div className="flex-1 text-right">
                                     <label className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 block">Team B</label>
-                                    <input
+                                    <select
                                         value={result.teamB}
                                         onChange={(e) => updateResult(index, 'teamB', e.target.value)}
-                                        className="w-full bg-transparent border-b border-white/10 p-2 text-white focus:border-primary focus:outline-none transition-colors text-lg font-medium text-right"
-                                        placeholder="Team Name"
-                                    />
+                                        className="w-full bg-transparent border-b border-white/10 p-2 text-white focus:border-primary focus:outline-none transition-colors text-lg font-medium text-right appearance-none"
+                                        dir="rtl"
+                                    >
+                                        <option value="" className="bg-slate-900">Select Team</option>
+                                        {teams.map(t => <option key={t.id} value={t.name} className="bg-slate-900">{t.name}</option>)}
+                                    </select>
                                 </div>
                             </div>
 
                             <div className="flex justify-between items-end">
                                 <div className="flex-1 max-w-xs">
                                     <label className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 block">Winner</label>
-                                    <input
+                                    <select
                                         value={result.winner}
                                         onChange={(e) => updateResult(index, 'winner', e.target.value)}
-                                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
-                                        placeholder="Winning Team"
-                                    />
+                                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors appearance-none"
+                                    >
+                                        <option value="" className="bg-slate-900">Select Winner</option>
+                                        <option value="Draw" className="bg-slate-900">Draw</option>
+                                        {result.teamA && <option value={result.teamA} className="bg-slate-900">{result.teamA}</option>}
+                                        {result.teamB && <option value={result.teamB} className="bg-slate-900">{result.teamB}</option>}
+                                    </select>
                                 </div>
                                 <button
                                     onClick={() => removeResult(index)}

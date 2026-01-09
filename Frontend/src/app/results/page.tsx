@@ -4,29 +4,63 @@ import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Medal, Trophy } from 'lucide-react';
 
-const STANDINGS = [
-    { rank: 1, team: 'Hostel 1', points: 45, gold: 2, silver: 1, bronze: 3 },
-    { rank: 2, team: 'Hostel 3', points: 38, gold: 1, silver: 2, bronze: 2 },
-    { rank: 3, team: 'Hostel 2', points: 32, gold: 1, silver: 1, bronze: 2 },
-    { rank: 4, team: 'Hostel 4', points: 28, gold: 0, silver: 2, bronze: 3 },
-];
-
 export default function ResultsPage() {
     const [results, setResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [standings, setStandings] = useState<any[]>([]);
 
     useEffect(() => {
-        fetch('http://localhost:5000/api/results')
-            .then((res) => res.json())
-            .then((data) => {
-                setResults(data);
-                setLoading(false);
-            })
-            .catch((err) => {
-                console.error('Error fetching results:', err);
-                setLoading(false);
-            });
+        Promise.all([
+            fetch('http://localhost:5000/api/results').then(res => res.json()),
+            fetch('http://localhost:5000/api/standings').then(res => res.json())
+        ]).then(([resultsData, standingsData]) => {
+            setResults(resultsData);
+            setStandings(calculateStandings(standingsData));
+            setLoading(false);
+        }).catch((err) => {
+            console.error('Error fetching data:', err);
+            setLoading(false);
+        });
     }, []);
+
+    const calculateStandings = (events: any[]) => {
+        const scores: any = {};
+        // Initialize scores for known hostels (assuming 4 hostels)
+        ['Hostel 1', 'Hostel 2', 'Hostel 3', 'Hostel 4'].forEach(h => {
+            scores[h] = { name: h, points: 0, gold: 0, silver: 0, bronze: 0 };
+        });
+
+        events.forEach(event => {
+            const { type, results } = event;
+            let pointsMap = { first: 0, second: 0, third: 0, fourth: 0 };
+
+            if (type === 'Standard') pointsMap = { first: 20, second: 12, third: 8, fourth: 4 };
+            else if (type === 'Team') pointsMap = { first: 10, second: 6, third: 4, fourth: 2 };
+            else if (type === 'Yoga') pointsMap = { first: 5, second: 3, third: 2, fourth: 0 };
+
+            // Assign points
+            if (results.first && scores[results.first]) {
+                scores[results.first].points += pointsMap.first;
+                scores[results.first].gold += 1;
+            }
+            if (results.second && scores[results.second]) {
+                scores[results.second].points += pointsMap.second;
+                scores[results.second].silver += 1;
+            }
+            if (results.third && scores[results.third]) {
+                scores[results.third].points += pointsMap.third;
+                scores[results.third].bronze += 1;
+            }
+            if (results.fourth && scores[results.fourth]) {
+                scores[results.fourth].points += pointsMap.fourth;
+            }
+        });
+
+        return Object.values(scores).sort((a: any, b: any) => {
+            if (b.points !== a.points) return b.points - a.points;
+            return b.gold - a.gold; // Tie-breaker: Gold medals
+        });
+    };
 
     return (
         <div className="min-h-screen bg-background text-foreground">
@@ -92,20 +126,20 @@ export default function ResultsPage() {
                             GC Standings
                         </h2>
                         <div className="bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 overflow-hidden">
-                            {STANDINGS.map((team, idx) => (
+                            {standings.map((team, idx) => (
                                 <div
-                                    key={team.rank}
-                                    className={`flex items-center justify-between p-6 ${idx !== STANDINGS.length - 1 ? 'border-b border-white/5' : ''} hover:bg-white/5 transition-colors`}
+                                    key={team.name}
+                                    className={`flex items-center justify-between p-6 ${idx !== standings.length - 1 ? 'border-b border-white/5' : ''} hover:bg-white/5 transition-colors`}
                                 >
                                     <div className="flex items-center">
-                                        <span className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg mr-4 ${team.rank === 1 ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/50' :
-                                            team.rank === 2 ? 'bg-slate-300/20 text-slate-300 border border-slate-300/50' :
-                                                team.rank === 3 ? 'bg-amber-700/20 text-amber-700 border border-amber-700/50' :
+                                        <span className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg mr-4 ${idx === 0 ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/50' :
+                                            idx === 1 ? 'bg-slate-300/20 text-slate-300 border border-slate-300/50' :
+                                                idx === 2 ? 'bg-amber-700/20 text-amber-700 border border-amber-700/50' :
                                                     'bg-slate-700/50 text-slate-500 border border-slate-600/50'
                                             }`}>
-                                            {team.rank}
+                                            {idx + 1}
                                         </span>
-                                        <span className="font-bold text-lg text-white">{team.team}</span>
+                                        <span className="font-bold text-lg text-white">{team.name}</span>
                                     </div>
                                     <span className="font-black text-2xl text-primary">{team.points} <span className="text-xs font-normal text-slate-500">pts</span></span>
                                 </div>

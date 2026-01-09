@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import { Users, Calendar, Medal, Image, Mail, LogOut } from 'lucide-react';
+import { Users, Calendar, Medal, Image, Mail, LogOut, Play, Trophy } from 'lucide-react';
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -30,6 +30,8 @@ export default function AdminDashboard() {
         { href: '/admin/teams', label: 'Manage Teams', icon: Users },
         { href: '/admin/schedule', label: 'Manage Schedule', icon: Calendar },
         { href: '/admin/results', label: 'Manage Results', icon: Medal },
+        { href: '/admin/standings', label: 'Manage Standings', icon: Trophy },
+        { href: '/admin/streams', label: 'Manage Streams', icon: Play },
         { href: '/admin/gallery', label: 'Manage Gallery', icon: Image },
         { href: '/admin/contact', label: 'Manage Contact', icon: Mail },
     ];

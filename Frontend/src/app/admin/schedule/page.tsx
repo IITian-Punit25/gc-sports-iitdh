@@ -24,6 +24,7 @@ const CATEGORIES = ['Men', 'Women', 'Mixed'];
 
 export default function ManageSchedule() {
     const [schedule, setSchedule] = useState<any[]>([]);
+    const [teams, setTeams] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
@@ -31,12 +32,26 @@ export default function ManageSchedule() {
         const token = localStorage.getItem('adminToken');
         if (!token) router.push('/admin/login');
 
-        fetch('http://localhost:5000/api/schedule')
-            .then((res) => res.json())
-            .then((data) => {
-                setSchedule(data);
+        const fetchData = async () => {
+            try {
+                const [scheduleRes, teamsRes] = await Promise.all([
+                    fetch('http://localhost:5000/api/schedule'),
+                    fetch('http://localhost:5000/api/teams')
+                ]);
+
+                const scheduleData = await scheduleRes.json();
+                const teamsData = await teamsRes.json();
+
+                setSchedule(scheduleData);
+                setTeams(teamsData);
                 setLoading(false);
-            });
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                setLoading(false);
+            }
+        };
+
+        fetchData();
     }, [router]);
 
     const handleSave = async () => {
@@ -51,7 +66,7 @@ export default function ManageSchedule() {
     const addMatch = () => {
         setSchedule([
             ...schedule,
-            { id: Date.now().toString(), sport: 'Football', category: 'Men', teamA: '', teamB: '', date: '', time: '', venue: '' },
+            { id: Date.now().toString(), sport: 'Football', category: 'Men', teamA: teams[0]?.name || '', teamB: teams[1]?.name || '', date: '', time: '', venue: '' },
         ]);
     };
 
@@ -119,21 +134,25 @@ export default function ManageSchedule() {
                             </div>
                             <div className="flex-1 min-w-[150px]">
                                 <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 block">Team A</label>
-                                <input
+                                <select
                                     value={match.teamA}
                                     onChange={(e) => updateMatch(index, 'teamA', e.target.value)}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
-                                    placeholder="Team Name"
-                                />
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors appearance-none"
+                                >
+                                    <option value="" className="bg-slate-900">Select Team</option>
+                                    {teams.map(t => <option key={t.id} value={t.name} className="bg-slate-900">{t.name}</option>)}
+                                </select>
                             </div>
                             <div className="flex-1 min-w-[150px]">
                                 <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 block">Team B</label>
-                                <input
+                                <select
                                     value={match.teamB}
                                     onChange={(e) => updateMatch(index, 'teamB', e.target.value)}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
-                                    placeholder="Team Name"
-                                />
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors appearance-none"
+                                >
+                                    <option value="" className="bg-slate-900">Select Team</option>
+                                    {teams.map(t => <option key={t.id} value={t.name} className="bg-slate-900">{t.name}</option>)}
+                                </select>
                             </div>
                             <div className="flex-1 min-w-[120px]">
                                 <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 block">Date</label>

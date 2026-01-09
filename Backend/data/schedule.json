@@ -1,47 +1,32 @@
 [
   {
     "id": "1",
-    "sport": "Football",
+    "sport": "Cricket",
     "teamA": "Hostel 1",
     "teamB": "Hostel 2",
-    "date": "2026-01-15",
-    "time": "17:00",
-    "venue": "Main Ground"
+    "date": "2025-10-15",
+    "time": "10:00 AM",
+    "venue": "Main Ground",
+    "status": "Upcoming"
   },
   {
     "id": "2",
-    "sport": "Cricket",
+    "sport": "Football",
     "teamA": "Hostel 3",
     "teamB": "Hostel 4",
-    "date": "2026-01-16",
-    "time": "09:00",
-    "venue": "Cricket Ground"
+    "date": "2025-10-16",
+    "time": "04:00 PM",
+    "venue": "Football Field",
+    "status": "Upcoming"
   },
   {
     "id": "3",
     "sport": "Badminton",
     "teamA": "Hostel 1",
     "teamB": "Hostel 3",
-    "date": "2026-01-17",
-    "time": "14:00",
-    "venue": "Indoor Stadium"
-  },
-  {
-    "id": "4",
-    "sport": "Basketball",
-    "teamA": "Hostel 2",
-    "teamB": "Hostel 4",
-    "date": "2026-01-18",
-    "time": "16:00",
-    "venue": "Basketball Court"
-  },
-  {
-    "id": "1767937725394",
-    "sport": "Hockey",
-    "teamA": "Hostel 1",
-    "teamB": "Hostel 2",
-    "date": "2026-01-22",
-    "time": "11:24",
-    "venue": "Google Headquarters"
+    "date": "2025-10-17",
+    "time": "09:00 AM",
+    "venue": "Indoor Court",
+    "status": "Upcoming"
   }
 ]
