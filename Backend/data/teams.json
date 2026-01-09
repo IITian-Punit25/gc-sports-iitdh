@@ -1,0 +1,126 @@
+[
+    {
+        "id": "hostel-1",
+        "name": "Hostel 1",
+        "members": [
+            {
+                "name": "Rahul Sharma",
+                "year": "2nd Year",
+                "branch": "CSE"
+            },
+            {
+                "name": "Amit Kumar",
+                "year": "3rd Year",
+                "branch": "EE"
+            },
+            {
+                "name": "Priya Singh",
+                "year": "2nd Year",
+                "branch": "ME"
+            },
+            {
+                "name": "Vikram Patel",
+                "year": "4th Year",
+                "branch": "CE"
+            },
+            {
+                "name": "Sneha Reddy",
+                "year": "1st Year",
+                "branch": "CSE"
+            }
+        ]
+    },
+    {
+        "id": "hostel-2",
+        "name": "Hostel 2",
+        "members": [
+            {
+                "name": "Arjun Nair",
+                "year": "2nd Year",
+                "branch": "EE"
+            },
+            {
+                "name": "Kavya Menon",
+                "year": "3rd Year",
+                "branch": "CSE"
+            },
+            {
+                "name": "Rohit Verma",
+                "year": "2nd Year",
+                "branch": "ME"
+            },
+            {
+                "name": "Neha Gupta",
+                "year": "4th Year",
+                "branch": "CE"
+            },
+            {
+                "name": "Suresh Kumar",
+                "year": "1st Year",
+                "branch": "EE"
+            }
+        ]
+    },
+    {
+        "id": "hostel-3",
+        "name": "Hostel 3",
+        "members": [
+            {
+                "name": "Aditya Joshi",
+                "year": "3rd Year",
+                "branch": "CSE"
+            },
+            {
+                "name": "Meera Iyer",
+                "year": "2nd Year",
+                "branch": "EE"
+            },
+            {
+                "name": "Karthik Rajan",
+                "year": "4th Year",
+                "branch": "ME"
+            },
+            {
+                "name": "Anjali Bhatt",
+                "year": "1st Year",
+                "branch": "CE"
+            },
+            {
+                "name": "Deepak Sinha",
+                "year": "2nd Year",
+                "branch": "CSE"
+            }
+        ]
+    },
+    {
+        "id": "hostel-4",
+        "name": "Hostel 4",
+        "members": [
+            {
+                "name": "Vishal Dubey",
+                "year": "2nd Year",
+                "branch": "ME"
+            },
+            {
+                "name": "Pooja Sharma",
+                "year": "3rd Year",
+                "branch": "CSE"
+            },
+            {
+                "name": "Rajesh Khanna",
+                "year": "1st Year",
+                "branch": "EE"
+            },
+            {
+                "name": "Divya Pillai",
+                "year": "4th Year",
+                "branch": "CE"
+            },
+            {
+                "name": "Manish Yadav",
+                "year": "2nd Year",
+                "branch": "EE"
+            }
+        ]
+    }
+]

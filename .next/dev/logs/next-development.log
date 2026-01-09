@@ -1,0 +1,16 @@
+[00:00:01.043] Server  LOG     ✓ Ready in 770ms
+[00:00:05.829] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:03:53.088] Server  ERROR   Error: ENOENT: no such file or directory, scandir '/home/punit/dsa and algo/gc-sports-app/src/app'
+[00:03:53.091] Server  ERROR   ⨯ "unhandledRejection:" Error: ENOENT: no such file or directory, scandir '/home/punit/dsa and algo/gc-sports-app/src/app'
+[00:03:53.092] Server  ERROR   ⨯ "unhandledRejection: " Error: ENOENT: no such file or directory, scandir '/home/punit/dsa and algo/gc-sports-app/src/app'
+[00:03:53.148] Server  ERROR   ⨯ PageNotFoundError: Cannot find module for page: route not found /_not-found/page
+[00:03:53.871] Server  ERROR   Error: ENOENT: no such file or directory, scandir '/home/punit/dsa and algo/gc-sports-app/src/app'
+[00:03:53.872] Server  ERROR   Error: ENOENT: no such file or directory, scandir '/home/punit/dsa and algo/gc-sports-app/src/app'
+[00:03:53.876] Server  ERROR   Error: ENOENT: no such file or directory, scandir '/home/punit/dsa and algo/gc-sports-app/src/app'
+[00:03:53.877] Server  ERROR   Error: ENOENT: no such file or directory, scandir '/home/punit/dsa and algo/gc-sports-app/src/app'
+[00:03:53.880] Server  ERROR   Error: ENOENT: no such file or directory, scandir '/home/punit/dsa and algo/gc-sports-app/src/app'
+[00:03:53.882] Server  ERROR   Error: ENOENT: no such file or directory, scandir '/home/punit/dsa and algo/gc-sports-app/src/app'
+[00:03:53.885] Server  ERROR   Error: ENOENT: no such file or directory, scandir '/home/punit/dsa and algo/gc-sports-app/src/app'
+[00:03:53.886] Server  ERROR   Error: ENOENT: no such file or directory, scandir '/home/punit/dsa and algo/gc-sports-app/src/app'
+[00:03:53.889] Server  ERROR   Error: ENOENT: no such file or directory, scandir '/home/punit/dsa and algo/gc-sports-app/src/app'
+[00:03:53.890] Server  ERROR   Error: ENOENT: no such file or directory, scandir '/home/punit/dsa and algo/gc-sports-app/src/app'

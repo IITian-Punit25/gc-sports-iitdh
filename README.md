@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Inter-Hostel Sports GC Management System
 
-## Getting Started
+## Setup Instructions
 
-First, run the development server:
+1.  **Install Dependencies**:
+    ```bash
+    npm install
+    ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2.  **Environment Variables**:
+    Create a `.env.local` file in the root directory:
+    ```env
+    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+    ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3.  **Database Setup**:
+    - Go to your Supabase project's SQL Editor.
+    - Copy the contents of `supabase_schema.sql` and run it.
+    - This will create the necessary tables (Teams, Sports, Matches, Standings).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+4.  **Run the App**:
+    ```bash
+    npm run dev
+    ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Features
 
-## Learn More
+- **Public Dashboard**: View GC Standings and Upcoming Matches.
+- **Live Match Center**: Real-time scores and stream embedding.
+- **Schedule**: Filterable match list.
+- **Admin Panel**: Manage matches and broadcast live scores.
 
-To learn more about Next.js, take a look at the following resources:
+## Scoring Logic
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Athletics**: 1st (20), 2nd (12), 3rd (8), 4th (4)
+- **Yoga**: 1st (5), 2nd (3), 3rd (2)
+- **Team Sports**: 1st (10), 2nd (6), 3rd (4)
+- **Tie-Breaker**: Points -> Gold -> Silver -> Bronze.
