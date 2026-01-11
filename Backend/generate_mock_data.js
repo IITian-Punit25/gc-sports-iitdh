@@ -149,19 +149,29 @@ const standings = [
         id: '1',
         sport: 'Cricket',
         type: 'Team',
+        category: 'Men',
         results: { first: 'Hostel 1', second: 'Hostel 2', third: 'Hostel 3', fourth: 'Hostel 4' }
     },
     {
         id: '2',
         sport: '100m Sprint',
         type: 'Standard',
+        category: 'Men',
         results: { first: 'Hostel 3', second: 'Hostel 1', third: 'Hostel 4', fourth: 'Hostel 2' }
     },
     {
         id: '3',
-        sport: 'Yoga',
-        type: 'Yoga',
+        sport: 'Tug of War',
+        type: 'Tug of War',
+        category: 'Men',
         results: { first: 'Hostel 2', second: 'Hostel 4', third: 'Hostel 1', fourth: '' }
+    },
+    {
+        id: '4',
+        sport: 'Tug of War',
+        type: 'Tug of War',
+        category: 'Women',
+        results: { first: 'Hostel 1', second: 'Hostel 3', third: 'Hostel 2', fourth: '' }
     }
 ];
 

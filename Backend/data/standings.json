@@ -34,12 +34,25 @@
   },
   {
     "id": "3",
-    "sport": "Yoga",
-    "type": "Yoga",
+    "sport": "Tug of War",
+    "type": "Tug of War",
+    "category": "Men",
     "results": {
       "first": "Hostel 2",
       "second": "Hostel 4",
       "third": "Hostel 1",
+      "fourth": ""
+    }
+  },
+  {
+    "id": "4",
+    "sport": "Tug of War",
+    "type": "Tug of War",
+    "category": "Women",
+    "results": {
+      "first": "Hostel 1",
+      "second": "Hostel 3",
+      "third": "Hostel 2",
       "fourth": ""
     }
   }

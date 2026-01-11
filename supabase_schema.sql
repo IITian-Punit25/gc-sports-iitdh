@@ -16,7 +16,7 @@ create table teams (
 create table sports (
   id uuid default uuid_generate_v4() primary key,
   name text not null,
-  category text not null check (category in ('TEAM', 'INDIVIDUAL', 'ATHLETICS', 'YOGA')),
+  category text not null check (category in ('TEAM', 'INDIVIDUAL', 'ATHLETICS', 'TUG_OF_WAR')),
   gender_allowed text not null check (gender_allowed in ('MEN', 'WOMEN', 'BOTH')),
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );

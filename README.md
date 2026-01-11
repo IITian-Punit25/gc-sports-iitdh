@@ -34,6 +34,6 @@
 ## Scoring Logic
 
 - **Athletics**: 1st (20), 2nd (12), 3rd (8), 4th (4)
-- **Yoga**: 1st (5), 2nd (3), 3rd (2)
+- **Tug of War**: 1st (5), 2nd (3), 3rd (2)
 - **Team Sports**: 1st (10), 2nd (6), 3rd (4)
 - **Tie-Breaker**: Points -> Gold -> Silver -> Bronze.

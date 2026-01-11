@@ -17,7 +17,7 @@ const SPORTS = [
     'Volleyball',
     'Weightlifting',
     'Powerlifting',
-    'Yoga'
+    'Tug of War'
 ];
 
 export default function ManageStreams() {

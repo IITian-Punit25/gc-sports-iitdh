@@ -7,7 +7,7 @@ import { Medal, Trophy } from 'lucide-react';
 export default function ResultsPage() {
     const [results, setResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [standings, setStandings] = useState<any[]>([]);
+    const [standings, setStandings] = useState<{ men: any[], women: any[] }>({ men: [], women: [] });
 
     const [selectedSport, setSelectedSport] = useState<string | null>(null);
 
@@ -35,19 +35,24 @@ export default function ResultsPage() {
     }, []);
 
     const calculateStandings = (events: any[]) => {
-        const scores: any = {};
-        // Initialize scores for known hostels (assuming 4 hostels)
+        const scoresMen: any = {};
+        const scoresWomen: any = {};
+
+        // Initialize scores
         ['Hostel 1', 'Hostel 2', 'Hostel 3', 'Hostel 4'].forEach(h => {
-            scores[h] = { name: h, points: 0, gold: 0, silver: 0, bronze: 0 };
+            scoresMen[h] = { name: h, points: 0, gold: 0, silver: 0, bronze: 0 };
+            scoresWomen[h] = { name: h, points: 0, gold: 0, silver: 0, bronze: 0 };
         });
 
         events.forEach(event => {
-            const { type, results } = event;
+            const { type, results, category } = event;
             let pointsMap = { first: 0, second: 0, third: 0, fourth: 0 };
 
             if (type === 'Standard') pointsMap = { first: 20, second: 12, third: 8, fourth: 4 };
             else if (type === 'Team') pointsMap = { first: 10, second: 6, third: 4, fourth: 2 };
-            else if (type === 'Yoga') pointsMap = { first: 5, second: 3, third: 2, fourth: 0 };
+            else if (type === 'Tug of War') pointsMap = { first: 5, second: 3, third: 2, fourth: 0 };
+
+            const scores = (category === 'Women') ? scoresWomen : scoresMen;
 
             // Assign points
             if (results.first && scores[results.first]) {
@@ -67,10 +72,15 @@ export default function ResultsPage() {
             }
         });
 
-        return Object.values(scores).sort((a: any, b: any) => {
+        const sortStandings = (scores: any) => Object.values(scores).sort((a: any, b: any) => {
             if (b.points !== a.points) return b.points - a.points;
-            return b.gold - a.gold; // Tie-breaker: Gold medals
+            return b.gold - a.gold;
         });
+
+        return {
+            men: sortStandings(scoresMen),
+            women: sortStandings(scoresWomen)
+        };
     };
 
     // Get unique sports
@@ -81,30 +91,30 @@ export default function ResultsPage() {
         <div className="min-h-screen bg-background text-foreground">
             <Navbar />
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div className="mb-12 text-center">
-                    <h1 className="text-4xl md:text-5xl font-black text-white mb-4 flex items-center justify-center">
-                        <Medal className="h-10 w-10 text-primary mr-4" />
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="mb-8 text-center">
+                    <h1 className="text-3xl md:text-4xl font-black text-white mb-2 flex items-center justify-center">
+                        <Medal className="h-8 w-8 text-primary mr-3" />
                         Results & Standings
                     </h1>
-                    <p className="text-slate-400 text-lg max-w-2xl mx-auto">Match results and leaderboard</p>
+                    <p className="text-slate-400 text-base max-w-2xl mx-auto">Match results and leaderboard</p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Recent Results */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-2xl font-bold text-white flex items-center">
-                                <Trophy className="h-6 w-6 text-primary mr-2" />
+                    <div className="lg:col-span-2 space-y-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-bold text-white flex items-center">
+                                <Trophy className="h-5 w-5 text-primary mr-2" />
                                 Recent Results
                             </h2>
 
                             {/* Sport Selector */}
-                            <div className="relative w-48">
+                            <div className="relative w-40">
                                 <select
                                     value={selectedSport || ''}
                                     onChange={(e) => setSelectedSport(e.target.value)}
-                                    className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none appearance-none cursor-pointer font-bold"
+                                    className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-1.5 text-white text-xs focus:border-primary focus:outline-none appearance-none cursor-pointer font-bold"
                                 >
                                     {sports.map((sport: any) => (
                                         <option key={sport} value={sport} className="bg-[#1a1a1a]">
@@ -112,8 +122,8 @@ export default function ResultsPage() {
                                         </option>
                                     ))}
                                 </select>
-                                <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-slate-400">
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                                     </svg>
                                 </div>
@@ -121,34 +131,34 @@ export default function ResultsPage() {
                         </div>
 
                         {loading ? (
-                            <div className="text-center py-12 text-slate-500">Loading results...</div>
+                            <div className="text-center py-8 text-slate-500">Loading results...</div>
                         ) : filteredResults.length === 0 ? (
-                            <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
-                                <p className="text-slate-400">No results found for this sport.</p>
+                            <div className="text-center py-8 bg-white/5 rounded-2xl border border-white/10">
+                                <p className="text-slate-400 text-sm">No results found for this sport.</p>
                             </div>
                         ) : (
                             filteredResults.map((result: any) => (
                                 <div
                                     key={result.id}
-                                    className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6 hover:border-primary/50 transition-all"
+                                    className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-4 hover:border-primary/50 transition-all"
                                 >
-                                    <div className="flex items-center justify-between mb-6">
-                                        <span className="inline-block bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full uppercase border border-primary/20">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <span className="inline-block bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase border border-primary/20">
                                             {result.sport} <span className="text-slate-500 ml-1">• {result.category || 'Men'}</span>
                                         </span>
-                                        <span className="text-sm text-slate-400">{result.date}</span>
+                                        <span className="text-xs text-slate-400">{result.date}</span>
                                     </div>
 
                                     <div className="flex items-center justify-between">
-                                        <div className={`text-xl font-bold ${result.winner === result.teamA ? 'text-primary' : 'text-slate-400'} flex items-center`}>
+                                        <div className={`text-lg font-bold ${result.winner === result.teamA ? 'text-primary' : 'text-slate-400'} flex items-center`}>
                                             {result.teamA}
-                                            {result.winner === result.teamA && <Trophy className="inline h-5 w-5 ml-2 text-primary" />}
+                                            {result.winner === result.teamA && <Trophy className="inline h-4 w-4 ml-2 text-primary" />}
                                         </div>
-                                        <div className="text-3xl font-black text-white bg-black/30 px-6 py-3 rounded-xl border border-white/5">
+                                        <div className="text-2xl font-black text-white bg-black/30 px-4 py-2 rounded-lg border border-white/5">
                                             {result.scoreA} - {result.scoreB}
                                         </div>
-                                        <div className={`text-xl font-bold ${result.winner === result.teamB ? 'text-primary' : 'text-slate-400'} flex items-center`}>
-                                            {result.winner === result.teamB && <Trophy className="inline h-5 w-5 mr-2 text-primary" />}
+                                        <div className={`text-lg font-bold ${result.winner === result.teamB ? 'text-primary' : 'text-slate-400'} flex items-center`}>
+                                            {result.winner === result.teamB && <Trophy className="inline h-4 w-4 mr-2 text-primary" />}
                                             {result.teamB}
                                         </div>
                                     </div>
@@ -159,29 +169,60 @@ export default function ResultsPage() {
 
                     {/* Standings */}
                     <div>
-                        <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
-                            <Medal className="h-6 w-6 text-primary mr-2" />
+                        <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+                            <Medal className="h-5 w-5 text-primary mr-2" />
                             GC Standings
                         </h2>
-                        <div className="bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 overflow-hidden">
-                            {standings.map((team, idx) => (
-                                <div
-                                    key={team.name}
-                                    className={`flex items-center justify-between p-6 ${idx !== standings.length - 1 ? 'border-b border-white/5' : ''} hover:bg-white/5 transition-colors`}
-                                >
-                                    <div className="flex items-center">
-                                        <span className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg mr-4 ${idx === 0 ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/50' :
-                                            idx === 1 ? 'bg-slate-300/20 text-slate-300 border border-slate-300/50' :
-                                                idx === 2 ? 'bg-amber-700/20 text-amber-700 border border-amber-700/50' :
-                                                    'bg-slate-700/50 text-slate-500 border border-slate-600/50'
-                                            }`}>
-                                            {idx + 1}
-                                        </span>
-                                        <span className="font-bold text-lg text-white">{team.name}</span>
-                                    </div>
-                                    <span className="font-black text-2xl text-primary">{team.points} <span className="text-xs font-normal text-slate-500">pts</span></span>
+                        <div className="space-y-6">
+                            {/* Men's Standings */}
+                            <div>
+                                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Men</h3>
+                                <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden">
+                                    {standings.men.map((team, idx) => (
+                                        <div
+                                            key={team.name}
+                                            className={`flex items-center justify-between p-3 ${idx !== standings.men.length - 1 ? 'border-b border-white/5' : ''} hover:bg-white/5 transition-colors`}
+                                        >
+                                            <div className="flex items-center">
+                                                <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mr-3 ${idx === 0 ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/50' :
+                                                    idx === 1 ? 'bg-slate-300/20 text-slate-300 border border-slate-300/50' :
+                                                        idx === 2 ? 'bg-amber-700/20 text-amber-700 border border-amber-700/50' :
+                                                            'bg-slate-700/50 text-slate-500 border border-slate-600/50'
+                                                    }`}>
+                                                    {idx + 1}
+                                                </span>
+                                                <span className="font-bold text-sm text-white">{team.name}</span>
+                                            </div>
+                                            <span className="font-black text-lg text-primary">{team.points} <span className="text-[10px] font-normal text-slate-500">pts</span></span>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
+                            </div>
+
+                            {/* Women's Standings */}
+                            <div>
+                                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Women</h3>
+                                <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden">
+                                    {standings.women.map((team, idx) => (
+                                        <div
+                                            key={team.name}
+                                            className={`flex items-center justify-between p-3 ${idx !== standings.women.length - 1 ? 'border-b border-white/5' : ''} hover:bg-white/5 transition-colors`}
+                                        >
+                                            <div className="flex items-center">
+                                                <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mr-3 ${idx === 0 ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/50' :
+                                                    idx === 1 ? 'bg-slate-300/20 text-slate-300 border border-slate-300/50' :
+                                                        idx === 2 ? 'bg-amber-700/20 text-amber-700 border border-amber-700/50' :
+                                                            'bg-slate-700/50 text-slate-500 border border-slate-600/50'
+                                                    }`}>
+                                                    {idx + 1}
+                                                </span>
+                                                <span className="font-bold text-sm text-white">{team.name}</span>
+                                            </div>
+                                            <span className="font-black text-lg text-primary">{team.points} <span className="text-[10px] font-normal text-slate-500">pts</span></span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -58,7 +58,8 @@ export default function ManageStandings() {
         const newEvent = {
             id: newId,
             sport: '',
-            type: 'Team', // Standard, Team, Yoga
+            type: 'Team', // Standard, Team, Tug of War
+            category: 'Men',
             results: { first: '', second: '', third: '', fourth: '' }
         };
 
@@ -160,7 +161,19 @@ export default function ManageStandings() {
                                 >
                                     <option value="Team">Team Sport</option>
                                     <option value="Standard">Standard (Athletics)</option>
-                                    <option value="Yoga">Yoga</option>
+                                    <option value="Tug of War">Tug of War</option>
+                                </select>
+                            </div>
+                            <div className="md:col-span-2 space-y-2">
+                                <label className="text-xs text-slate-400 font-bold uppercase tracking-wider">Category</label>
+                                <select
+                                    value={selectedEvent.category || 'Men'}
+                                    onChange={(e) => updateEvent(selectedEventIndex, 'category', e.target.value)}
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none appearance-none cursor-pointer"
+                                >
+                                    <option value="Men">Men</option>
+                                    <option value="Women">Women</option>
+                                    <option value="Mixed">Mixed</option>
                                 </select>
                             </div>
 
