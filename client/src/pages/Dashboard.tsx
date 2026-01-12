@@ -30,7 +30,7 @@ export default function Dashboard() {
     const [upcomingMatches, setUpcomingMatches] = useState<Match[]>([]);
 
     useEffect(() => {
-        fetch('http://localhost:5000/api/matches')
+        fetch('/api/matches')
             .then(res => res.json())
             .then(data => setUpcomingMatches(data))
             .catch(err => console.error('Failed to fetch matches:', err));
