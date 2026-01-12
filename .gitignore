@@ -4,3 +4,10 @@ node_modules
 dist
 build
 coverage
+client/node_modules
+client/build
+client/dist
+server/node_modules
+Frontend
+Backend
+.next
