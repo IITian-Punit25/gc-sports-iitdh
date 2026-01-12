@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Save, Plus, Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '@/config/api';
 
 const SPORTS = [
     'Athletics',
@@ -36,8 +37,8 @@ export default function ManageResults() {
         const fetchData = async () => {
             try {
                 const [resultsRes, teamsRes] = await Promise.all([
-                    fetch('http://localhost:5000/api/results'),
-                    fetch('http://localhost:5000/api/teams')
+                    fetch(`${API_BASE_URL}/api/results`),
+                    fetch(`${API_BASE_URL}/api/teams`)
                 ]);
 
                 const resultsData = await resultsRes.json();
@@ -78,7 +79,7 @@ export default function ManageResults() {
             }
         }
 
-        await fetch('http://localhost:5000/api/results', {
+        await fetch(`${API_BASE_URL}/api/results`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(results),
@@ -165,7 +166,7 @@ export default function ManageResults() {
                         <option value="" disabled>Select a Match</option>
                         {results.map(result => (
                             <option key={result.id} value={result.id} className="bg-slate-900">
-                                {result.sport} - {result.teamA} vs {result.teamB}
+                                {result.sport} ({result.category}) - {result.teamA} vs {result.teamB}
                             </option>
                         ))}
                     </select>

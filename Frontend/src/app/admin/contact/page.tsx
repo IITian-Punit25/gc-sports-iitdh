@@ -4,9 +4,16 @@ import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Save, Plus, Trash, Upload, Link as LinkIcon, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '@/config/api';
 
 export default function ManageContact() {
-    const [contact, setContact] = useState<any>(null);
+    const [contact, setContact] = useState<any>({
+        email: '',
+        phone: '',
+        address: '',
+        socialMedia: { instagram: '', twitter: '', youtube: '' },
+        coordinators: []
+    });
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
     const router = useRouter();
@@ -15,10 +22,29 @@ export default function ManageContact() {
         const token = localStorage.getItem('adminToken');
         if (!token) router.push('/admin/login');
 
-        fetch('http://localhost:5000/api/contact')
-            .then((res) => res.json())
+        fetch(`${API_BASE_URL}/api/contact`)
+            .then((res) => {
+                if (!res.ok) throw new Error('Failed to fetch contact info');
+                return res.json();
+            })
             .then((data) => {
-                setContact(data);
+                if (data) {
+                    setContact({
+                        email: data.email || '',
+                        phone: data.phone || '',
+                        address: data.address || '',
+                        socialMedia: {
+                            instagram: data.socialMedia?.instagram || '',
+                            twitter: data.socialMedia?.twitter || '',
+                            youtube: data.socialMedia?.youtube || ''
+                        },
+                        coordinators: data.coordinators || []
+                    });
+                }
+                setLoading(false);
+            })
+            .catch((err) => {
+                console.error('Error fetching contact info:', err);
                 setLoading(false);
             });
     }, [router]);
@@ -36,7 +62,7 @@ export default function ManageContact() {
             }
         }
 
-        await fetch('http://localhost:5000/api/contact', {
+        await fetch(`${API_BASE_URL}/api/contact`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(contact),
@@ -91,7 +117,7 @@ export default function ManageContact() {
         formData.append('image', file);
 
         try {
-            const res = await fetch('http://localhost:5000/api/upload', {
+            const res = await fetch(`${API_BASE_URL}/api/upload`, {
                 method: 'POST',
                 body: formData,
             });

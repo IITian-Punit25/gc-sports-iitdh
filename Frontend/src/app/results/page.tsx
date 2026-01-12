@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Medal, Trophy } from 'lucide-react';
+import { API_BASE_URL } from '@/config/api';
 
 export default function ResultsPage() {
     const [results, setResults] = useState<any[]>([]);
@@ -13,8 +14,8 @@ export default function ResultsPage() {
 
     useEffect(() => {
         Promise.all([
-            fetch('http://localhost:5000/api/results').then(res => res.json()),
-            fetch('http://localhost:5000/api/standings').then(res => res.json())
+            fetch(`${API_BASE_URL}/api/results`).then(res => res.json()),
+            fetch(`${API_BASE_URL}/api/standings`).then(res => res.json())
         ]).then(([resultsData, standingsData]) => {
             setResults(resultsData);
 
@@ -178,24 +179,31 @@ export default function ResultsPage() {
                             <div>
                                 <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Men</h3>
                                 <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden">
-                                    {standings.men.map((team, idx) => (
-                                        <div
-                                            key={team.name}
-                                            className={`flex items-center justify-between p-3 ${idx !== standings.men.length - 1 ? 'border-b border-white/5' : ''} hover:bg-white/5 transition-colors`}
-                                        >
-                                            <div className="flex items-center">
-                                                <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mr-3 ${idx === 0 ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/50' :
-                                                    idx === 1 ? 'bg-slate-300/20 text-slate-300 border border-slate-300/50' :
-                                                        idx === 2 ? 'bg-amber-700/20 text-amber-700 border border-amber-700/50' :
-                                                            'bg-slate-700/50 text-slate-500 border border-slate-600/50'
-                                                    }`}>
-                                                    {idx + 1}
-                                                </span>
-                                                <span className="font-bold text-sm text-white">{team.name}</span>
-                                            </div>
-                                            <span className="font-black text-lg text-primary">{team.points} <span className="text-[10px] font-normal text-slate-500">pts</span></span>
+                                    {standings.men.length === 0 ? (
+                                        <div className="p-6 text-center text-slate-500">
+                                            <Trophy className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                                            <p className="text-sm">No standings available.</p>
                                         </div>
-                                    ))}
+                                    ) : (
+                                        standings.men.map((team, idx) => (
+                                            <div
+                                                key={team.name}
+                                                className={`flex items-center justify-between p-3 ${idx !== standings.men.length - 1 ? 'border-b border-white/5' : ''} hover:bg-white/5 transition-colors`}
+                                            >
+                                                <div className="flex items-center">
+                                                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mr-3 ${idx === 0 ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/50' :
+                                                        idx === 1 ? 'bg-slate-300/20 text-slate-300 border border-slate-300/50' :
+                                                            idx === 2 ? 'bg-amber-700/20 text-amber-700 border border-amber-700/50' :
+                                                                'bg-slate-700/50 text-slate-500 border border-slate-600/50'
+                                                        }`}>
+                                                        {idx + 1}
+                                                    </span>
+                                                    <span className="font-bold text-sm text-white">{team.name}</span>
+                                                </div>
+                                                <span className="font-black text-lg text-primary">{team.points} <span className="text-[10px] font-normal text-slate-500">pts</span></span>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </div>
 
@@ -203,24 +211,31 @@ export default function ResultsPage() {
                             <div>
                                 <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Women</h3>
                                 <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden">
-                                    {standings.women.map((team, idx) => (
-                                        <div
-                                            key={team.name}
-                                            className={`flex items-center justify-between p-3 ${idx !== standings.women.length - 1 ? 'border-b border-white/5' : ''} hover:bg-white/5 transition-colors`}
-                                        >
-                                            <div className="flex items-center">
-                                                <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mr-3 ${idx === 0 ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/50' :
-                                                    idx === 1 ? 'bg-slate-300/20 text-slate-300 border border-slate-300/50' :
-                                                        idx === 2 ? 'bg-amber-700/20 text-amber-700 border border-amber-700/50' :
-                                                            'bg-slate-700/50 text-slate-500 border border-slate-600/50'
-                                                    }`}>
-                                                    {idx + 1}
-                                                </span>
-                                                <span className="font-bold text-sm text-white">{team.name}</span>
-                                            </div>
-                                            <span className="font-black text-lg text-primary">{team.points} <span className="text-[10px] font-normal text-slate-500">pts</span></span>
+                                    {standings.women.length === 0 ? (
+                                        <div className="p-6 text-center text-slate-500">
+                                            <Trophy className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                                            <p className="text-sm">No standings available.</p>
                                         </div>
-                                    ))}
+                                    ) : (
+                                        standings.women.map((team, idx) => (
+                                            <div
+                                                key={team.name}
+                                                className={`flex items-center justify-between p-3 ${idx !== standings.women.length - 1 ? 'border-b border-white/5' : ''} hover:bg-white/5 transition-colors`}
+                                            >
+                                                <div className="flex items-center">
+                                                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mr-3 ${idx === 0 ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/50' :
+                                                        idx === 1 ? 'bg-slate-300/20 text-slate-300 border border-slate-300/50' :
+                                                            idx === 2 ? 'bg-amber-700/20 text-amber-700 border border-amber-700/50' :
+                                                                'bg-slate-700/50 text-slate-500 border border-slate-600/50'
+                                                        }`}>
+                                                        {idx + 1}
+                                                    </span>
+                                                    <span className="font-bold text-sm text-white">{team.name}</span>
+                                                </div>
+                                                <span className="font-black text-lg text-primary">{team.points} <span className="text-[10px] font-normal text-slate-500">pts</span></span>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </div>
                         </div>

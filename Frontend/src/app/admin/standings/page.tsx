@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Save, Plus, Trash, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '@/config/api';
 
 export default function ManageStandings() {
     const [standings, setStandings] = useState<any[]>([]);
@@ -17,8 +18,8 @@ export default function ManageStandings() {
         if (!token) router.push('/admin/login');
 
         Promise.all([
-            fetch('http://localhost:5000/api/standings').then(res => res.json()),
-            fetch('http://localhost:5000/api/teams').then(res => res.json())
+            fetch(`${API_BASE_URL}/api/standings`).then(res => res.json()),
+            fetch(`${API_BASE_URL}/api/teams`).then(res => res.json())
         ]).then(([standingsData, teamsData]) => {
             setStandings(standingsData);
             setTeams(teamsData);
@@ -45,7 +46,7 @@ export default function ManageStandings() {
             }
         }
 
-        await fetch('http://localhost:5000/api/standings', {
+        await fetch(`${API_BASE_URL}/api/standings`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(standings),
@@ -134,7 +135,7 @@ export default function ManageStandings() {
                         <option value="" disabled>Select an Event</option>
                         {standings.map(event => (
                             <option key={event.id} value={event.id} className="bg-slate-900">
-                                {event.sport || 'New Event'}
+                                {event.sport || 'New Event'} ({event.category})
                             </option>
                         ))}
                     </select>

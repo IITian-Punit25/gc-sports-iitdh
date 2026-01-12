@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
-import { Save, Play, Link as LinkIcon } from 'lucide-react';
+import { Save, Play, Video, Link as LinkIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '@/config/api';
 
 const SPORTS = [
     'Athletics',
@@ -30,7 +31,7 @@ export default function ManageStreams() {
         const token = localStorage.getItem('adminToken');
         if (!token) router.push('/admin/login');
 
-        fetch('http://localhost:5000/api/results')
+        fetch(`${API_BASE_URL}/api/results`)
             .then((res) => res.json())
             .then((data) => {
                 setResults(data);
@@ -39,7 +40,7 @@ export default function ManageStreams() {
     }, [router]);
 
     const handleSave = async () => {
-        await fetch('http://localhost:5000/api/results', {
+        await fetch(`${API_BASE_URL}/api/results`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(results),

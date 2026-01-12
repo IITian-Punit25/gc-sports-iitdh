@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Save, Plus, Trash, Crown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '@/config/api';
 
 export default function ManageTeams() {
     const [teams, setTeams] = useState<any[]>([]);
@@ -16,7 +17,7 @@ export default function ManageTeams() {
         const token = localStorage.getItem('adminToken');
         if (!token) router.push('/admin/login');
 
-        fetch('http://localhost:5000/api/teams')
+        fetch(`${API_BASE_URL}/api/teams`)
             .then((res) => res.json())
             .then((data) => {
                 setTeams(data);
@@ -45,7 +46,7 @@ export default function ManageTeams() {
             }
         }
 
-        await fetch('http://localhost:5000/api/teams', {
+        await fetch(`${API_BASE_URL}/api/teams`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(teams),
@@ -134,7 +135,7 @@ export default function ManageTeams() {
         formData.append('image', file);
 
         try {
-            const res = await fetch('http://localhost:5000/api/upload', {
+            const res = await fetch(`${API_BASE_URL}/api/upload`, {
                 method: 'POST',
                 body: formData,
             });

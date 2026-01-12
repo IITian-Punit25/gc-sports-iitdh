@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
-import { Mail, Phone, MapPin, Instagram, Twitter, Youtube } from 'lucide-react';
+import { Mail, Phone, MapPin, Instagram, Twitter, Youtube, Users } from 'lucide-react';
 import { io } from 'socket.io-client';
+import { API_BASE_URL } from '@/config/api';
 
 export default function ContactPage() {
     const [contact, setContact] = useState<any>(null);
@@ -11,7 +12,7 @@ export default function ContactPage() {
 
     const fetchContact = async () => {
         try {
-            const res = await fetch('http://localhost:5000/api/contact');
+            const res = await fetch(`${API_BASE_URL}/api/contact`);
             const data = await res.json();
             setContact(data);
             setLoading(false);
@@ -24,7 +25,7 @@ export default function ContactPage() {
     useEffect(() => {
         fetchContact();
 
-        const socket = io('http://localhost:5000');
+        const socket = io(API_BASE_URL);
 
         socket.on('dataUpdate', (data: { type: string }) => {
             if (data.type === 'contact') {
@@ -113,25 +114,34 @@ export default function ContactPage() {
                             <h2 className="text-2xl font-bold text-white mb-8">Coordinators</h2>
 
                             <div className="space-y-4">
-                                {contact.coordinators && contact.coordinators.map((coord: any, idx: number) => (
-                                    <div key={idx} className="p-6 bg-black/20 rounded-xl border border-white/5 hover:border-primary/30 transition-colors flex items-center gap-6">
-                                        <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-primary/20 bg-white/5 flex-shrink-0">
-                                            <img
-                                                src={coord.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${coord.name}`}
-                                                alt={coord.name}
-                                                className="w-full h-full object-cover"
-                                            />
+                                <div className="space-y-4">
+                                    {(!contact.coordinators || contact.coordinators.length === 0) ? (
+                                        <div className="text-center py-8 bg-black/20 rounded-xl border border-white/5">
+                                            <Users className="h-8 w-8 mx-auto mb-2 text-slate-500 opacity-50" />
+                                            <p className="text-slate-400 text-sm">No coordinators listed.</p>
                                         </div>
-                                        <div>
-                                            <div className="font-bold text-xl text-white mb-1">{coord.name}</div>
-                                            <div className="text-sm text-primary font-bold uppercase tracking-wider mb-2">{coord.role}</div>
-                                            <div className="flex items-center text-slate-400">
-                                                <Phone className="h-4 w-4 mr-2" />
-                                                {coord.phone}
+                                    ) : (
+                                        contact.coordinators.map((coord: any, idx: number) => (
+                                            <div key={idx} className="p-6 bg-black/20 rounded-xl border border-white/5 hover:border-primary/30 transition-colors flex items-center gap-6">
+                                                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-primary/20 bg-white/5 flex-shrink-0">
+                                                    <img
+                                                        src={coord.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${coord.name}`}
+                                                        alt={coord.name}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-xl text-white mb-1">{coord.name}</div>
+                                                    <div className="text-sm text-primary font-bold uppercase tracking-wider mb-2">{coord.role}</div>
+                                                    <div className="flex items-center text-slate-400">
+                                                        <Phone className="h-4 w-4 mr-2" />
+                                                        {coord.phone}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                ))}
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Play, Calendar, Trophy } from 'lucide-react';
+import { API_BASE_URL } from '@/config/api';
 
 export default function LivePage() {
     const [results, setResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch('http://localhost:5000/api/results')
+        fetch(`${API_BASE_URL}/api/results`)
             .then((res) => res.json())
             .then((data) => {
                 // Filter for matches that have a live link or are recent

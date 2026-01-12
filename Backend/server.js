@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
@@ -168,8 +169,8 @@ app.post('/api/standings', (req, res) => {
 
 app.post('/api/login', (req, res) => {
     const { password } = req.body;
-    if (password === 'admin123') {
-        res.json({ success: true, token: 'admin-token-secret' });
+    if (password === process.env.ADMIN_PASSWORD) {
+        res.json({ success: true, token: 'admin-token-123' });
     } else {
         res.status(401).json({ success: false, message: 'Invalid password' });
     }

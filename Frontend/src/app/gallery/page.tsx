@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Image as ImageIcon, X, ZoomIn, Loader2 } from 'lucide-react';
 import { io } from 'socket.io-client';
+import { API_BASE_URL } from '@/config/api';
 
 export default function GalleryPage() {
     const [gallery, setGallery] = useState<any[]>([]);
@@ -12,7 +13,7 @@ export default function GalleryPage() {
 
     const fetchGallery = async () => {
         try {
-            const res = await fetch('http://localhost:5000/api/gallery');
+            const res = await fetch(`${API_BASE_URL}/api/gallery`);
             const data = await res.json();
             setGallery(data);
             setLoading(false);
@@ -25,7 +26,7 @@ export default function GalleryPage() {
     useEffect(() => {
         fetchGallery();
 
-        const socket = io('http://localhost:5000');
+        const socket = io(API_BASE_URL);
 
         socket.on('dataUpdate', (data: { type: string }) => {
             if (data.type === 'gallery') {
@@ -74,27 +75,34 @@ export default function GalleryPage() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {gallery.map((item) => (
-                            <div
-                                key={item.id}
-                                onClick={() => openLightbox(item)}
-                                className="group relative bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden cursor-pointer hover:border-primary/50 transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/10"
-                            >
-                                <div className="aspect-[4/3] overflow-hidden relative">
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 duration-300">
-                                        <ZoomIn className="h-10 w-10 text-white drop-shadow-lg transform scale-50 group-hover:scale-100 transition-transform" />
-                                    </div>
-                                    <img
-                                        src={item.url}
-                                        alt={item.title}
-                                        className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out"
-                                    />
-                                </div>
-                                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-20">
-                                    <h3 className="font-bold text-lg text-white">{item.title}</h3>
-                                </div>
+                        {gallery.length === 0 ? (
+                            <div className="col-span-full text-center py-12 bg-white/5 rounded-2xl border border-white/10">
+                                <ImageIcon className="h-12 w-12 mx-auto mb-4 text-slate-500 opacity-50" />
+                                <p className="text-slate-400 text-lg">No images in gallery yet.</p>
                             </div>
-                        ))}
+                        ) : (
+                            gallery.map((item) => (
+                                <div
+                                    key={item.id}
+                                    onClick={() => openLightbox(item)}
+                                    className="group relative bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden cursor-pointer hover:border-primary/50 transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/10"
+                                >
+                                    <div className="aspect-[4/3] overflow-hidden relative">
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 duration-300">
+                                            <ZoomIn className="h-10 w-10 text-white drop-shadow-lg transform scale-50 group-hover:scale-100 transition-transform" />
+                                        </div>
+                                        <img
+                                            src={item.url}
+                                            alt={item.title}
+                                            className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out"
+                                        />
+                                    </div>
+                                    <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-20">
+                                        <h3 className="font-bold text-lg text-white">{item.title}</h3>
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 )}
             </main>

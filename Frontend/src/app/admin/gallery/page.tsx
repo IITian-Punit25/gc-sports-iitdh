@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Save, Plus, Trash, Upload, Link as LinkIcon, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '@/config/api';
 
 export default function ManageGallery() {
     const [gallery, setGallery] = useState<any[]>([]);
@@ -15,7 +16,7 @@ export default function ManageGallery() {
         const token = localStorage.getItem('adminToken');
         if (!token) router.push('/admin/login');
 
-        fetch('http://localhost:5000/api/gallery')
+        fetch(`${API_BASE_URL}/api/gallery`)
             .then((res) => res.json())
             .then((data) => {
                 setGallery(data);
@@ -33,7 +34,7 @@ export default function ManageGallery() {
             setGallery(validGallery);
         }
 
-        await fetch('http://localhost:5000/api/gallery', {
+        await fetch(`${API_BASE_URL}/api/gallery`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(validGallery),
@@ -68,7 +69,7 @@ export default function ManageGallery() {
         formData.append('image', file);
 
         try {
-            const res = await fetch('http://localhost:5000/api/upload', {
+            const res = await fetch(`${API_BASE_URL}/api/upload`, {
                 method: 'POST',
                 body: formData,
             });
