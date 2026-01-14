@@ -4,57 +4,50 @@
     "name": "Hostel 1",
     "members": [
       {
-        "name": "Kavya Patel",
-        "year": "4th Year",
-        "branch": "EEE",
+        "name": "Aarav Sharma",
+        "year": "3rd Year",
+        "branch": "CSE",
         "isCaptain": true,
-        "image": "http://localhost:5000/uploads/1767995693470-852649401.png"
+        "image": ""
       },
       {
-        "name": "Ishaan Singh",
-        "year": "1st Year",
+        "name": "Ishan Verma",
+        "year": "2nd Year",
+        "branch": "EE",
+        "isCaptain": false,
+        "image": ""
+      },
+      {
+        "name": "Riya Gupta",
+        "year": "4th Year",
         "branch": "ME",
         "isCaptain": false,
         "image": ""
       },
       {
-        "name": "Reyansh Desai",
-        "year": "4th Year",
-        "branch": "BS-MS",
-        "isCaptain": false,
-        "image": "http://localhost:5000/uploads/1767995688389-520183198.png"
-      },
-      {
-        "name": "Anika Jain",
+        "name": "Ananya Reddy",
         "year": "1st Year",
-        "branch": "C&IE",
+        "branch": "ECE",
         "isCaptain": false,
         "image": ""
       },
       {
-        "name": "Myra Nair",
-        "year": "1st Year",
+        "name": "Vihaan Kumar",
+        "year": "3rd Year",
         "branch": "M&C",
         "isCaptain": false,
         "image": ""
       },
       {
-        "name": "Navya Kumar",
-        "year": "5th Year",
-        "branch": "ME",
+        "name": "Aditya Mishra",
+        "year": "2nd Year",
+        "branch": "BS-MS",
         "isCaptain": false,
         "image": ""
       },
       {
-        "name": "Aditya Mehta",
-        "year": "1st Year",
-        "branch": "EEE",
-        "isCaptain": false,
-        "image": ""
-      },
-      {
-        "name": "Kiara Jain",
-        "year": "3rd Year",
+        "name": "Kavya Patel",
+        "year": "4th Year",
         "branch": "EP",
         "isCaptain": false,
         "image": ""
