@@ -2,12 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
+import Loader from '@/components/ui/Loader';
 import { Save, Plus, Trash, Upload, Link as LinkIcon, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+interface GalleryItem {
+    id: string;
+    title: string;
+    url: string;
+    type: 'url' | 'upload';
+}
+
 export default function ManageGallery() {
-    const [gallery, setGallery] = useState<any[]>([]);
+    const [gallery, setGallery] = useState<GalleryItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
     const router = useRouter();
 
@@ -15,7 +24,7 @@ export default function ManageGallery() {
         const token = localStorage.getItem('adminToken');
         if (!token) router.push('/admin/login');
 
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/gallery`)
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/gallery`)
             .then((res) => res.json())
             .then((data) => {
                 setGallery(data);
@@ -33,31 +42,43 @@ export default function ManageGallery() {
             setGallery(validGallery);
         }
 
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/gallery`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(validGallery),
-        });
-        alert('Gallery saved successfully!');
+        setSaving(true);
+        try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/gallery`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(validGallery),
+            });
+            alert('Gallery saved successfully!');
+        } catch (error) {
+            console.error('Error saving gallery:', error);
+            alert('Failed to save gallery.');
+        } finally {
+            setSaving(false);
+        }
     };
 
     const addImage = () => {
-        setGallery([
-            { id: Date.now().toString(), title: '', url: '', type: 'url' }, // Added type: 'url' | 'upload'
-            ...gallery,
+        setGallery(prevGallery => [
+            { id: Date.now().toString(), title: '', url: '', type: 'url' },
+            ...prevGallery,
         ]);
     };
 
     const updateImage = (index: number, field: string, value: string) => {
-        const newGallery = [...gallery];
-        newGallery[index][field] = value;
-        setGallery(newGallery);
+        setGallery(prevGallery => {
+            const newGallery = [...prevGallery];
+            newGallery[index] = { ...newGallery[index], [field]: value };
+            return newGallery;
+        });
     };
 
     const removeImage = (index: number) => {
-        const newGallery = [...gallery];
-        newGallery.splice(index, 1);
-        setGallery(newGallery);
+        setGallery(prevGallery => {
+            const newGallery = [...prevGallery];
+            newGallery.splice(index, 1);
+            return newGallery;
+        });
     };
 
     const handleFileUpload = async (index: number, file: File) => {
@@ -68,7 +89,7 @@ export default function ManageGallery() {
         formData.append('image', file);
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/upload`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, {
                 method: 'POST',
                 body: formData,
             });
@@ -86,7 +107,7 @@ export default function ManageGallery() {
         }
     };
 
-    if (loading) return <div className="p-8 text-center text-slate-400">Loading...</div>;
+    if (loading) return <Loader />;
 
     return (
         <div className="min-h-screen bg-background text-foreground">
@@ -106,9 +127,19 @@ export default function ManageGallery() {
                         </button>
                         <button
                             onClick={handleSave}
-                            className="bg-primary hover:bg-primary/90 text-black font-bold px-6 py-3 rounded-xl flex items-center transition-all shadow-lg shadow-primary/20"
+                            disabled={saving}
+                            className="bg-primary hover:bg-primary/90 text-black font-bold px-6 py-3 rounded-xl flex items-center transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <Save className="h-5 w-5 mr-2" /> Save
+                            {saving ? (
+                                <>
+                                    <div className="h-5 w-5 mr-2 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="h-5 w-5 mr-2" /> Save
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>
@@ -119,7 +150,7 @@ export default function ManageGallery() {
                             No images in gallery. Click "Add Image" to upload or link one.
                         </div>
                     )}
-                    {gallery.map((item, index) => (
+                    {gallery.map((item: GalleryItem, index: number) => (
                         <div key={item.id} className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10 hover:border-primary/30 transition-all">
                             <div className="aspect-video bg-black/30 rounded-xl mb-6 overflow-hidden border border-white/5 relative group">
                                 {item.url ? (

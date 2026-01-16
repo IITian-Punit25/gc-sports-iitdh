@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
+import Loader from '@/components/ui/Loader';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { Save, Plus, Trash, FileText, Link as LinkIcon, Upload, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -34,10 +35,31 @@ const SPORTS = [
 
 const CATEGORIES = ['Men', 'Women', 'Mixed'];
 
+interface Team {
+    id: string;
+    name: string;
+}
+
+interface Result {
+    id: string;
+    sport: string;
+    category: string;
+    teamA: string;
+    teamB: string;
+    scoreA: number;
+    scoreB: number;
+    winner: string;
+    date: string;
+    liveLink: string;
+    scoreSheetType?: 'url' | 'upload';
+    scoreSheetLink?: string;
+}
+
 export default function ManageResults() {
-    const [results, setResults] = useState<any[]>([]);
-    const [teams, setTeams] = useState<any[]>([]);
+    const [results, setResults] = useState<Result[]>([]);
+    const [teams, setTeams] = useState<Team[]>([]);
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [selectedResultId, setSelectedResultId] = useState<string>("");
     const [filterSport, setFilterSport] = useState<string>("All");
     const [uploading, setUploading] = useState(false);
@@ -50,17 +72,30 @@ export default function ManageResults() {
         const fetchData = async () => {
             try {
                 const [resultsRes, teamsRes] = await Promise.all([
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/results`),
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/teams`)
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/results`),
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/teams`)
                 ]);
 
                 const resultsData = await resultsRes.json();
                 const teamsData = await teamsRes.json();
 
-                setResults(resultsData);
+                // Ensure all results have required fields
+                const sanitizedResults = resultsData.map((result: any) => ({
+                    ...result,
+                    scoreA: result.scoreA || 0,
+                    scoreB: result.scoreB || 0,
+                    winner: result.winner || '',
+                    date: result.date || '',
+                    liveLink: result.liveLink || '',
+                    scoreSheetType: result.scoreSheetType || 'url',
+                    scoreSheetLink: result.scoreSheetLink || '',
+                    category: result.category || 'Men'
+                }));
+
+                setResults(sanitizedResults);
                 setTeams(teamsData);
-                if (resultsData.length > 0) {
-                    setSelectedResultId(resultsData[0].id);
+                if (sanitizedResults.length > 0) {
+                    setSelectedResultId(sanitizedResults[0].id);
                 }
                 setLoading(false);
             } catch (error) {
@@ -75,29 +110,37 @@ export default function ManageResults() {
     const handleSave = async () => {
         for (const result of results) {
             if (!result.teamA || !result.teamB) {
-                alert("Both Team A and Team B must be selected for all matches.");
+                alert(`Match between ${result.teamA || 'Unknown'} and ${result.teamB || 'Unknown'} must have both teams selected.`);
                 return;
             }
             if (result.teamA === result.teamB) {
-                alert("Team A and Team B cannot be the same.");
+                alert(`Team A and Team B cannot be the same for match between ${result.teamA} and ${result.teamB}.`);
                 return;
             }
             if (result.scoreA < 0 || result.scoreB < 0) {
-                alert("Scores cannot be negative.");
+                alert(`Scores cannot be negative for match between ${result.teamA} and ${result.teamB}.`);
                 return;
             }
             if (!result.winner) {
-                alert("Please select a Winner (or Draw) for all matches.");
+                alert(`Please select a Winner (or Draw) for match between ${result.teamA} and ${result.teamB}.`);
                 return;
             }
         }
 
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/results`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(results),
-        });
-        alert('Results published successfully!');
+        setSaving(true);
+        try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/results`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(results),
+            });
+            alert('Results published successfully!');
+        } catch (error) {
+            console.error('Error saving results:', error);
+            alert('Failed to save results.');
+        } finally {
+            setSaving(false);
+        }
     };
 
     const addResult = () => {
@@ -120,21 +163,39 @@ export default function ManageResults() {
     };
 
     const updateResult = (index: number, field: string, value: string | number) => {
-        const newResults = [...results];
-        newResults[index][field] = value;
-        setResults(newResults);
+        setResults(prevResults => {
+            const newResults = [...prevResults];
+            newResults[index] = { ...newResults[index], [field]: value };
+            return newResults;
+        });
     };
 
     const removeResult = (index: number) => {
+        if (index === -1) return;
         if (confirm('Are you sure you want to delete this result?')) {
-            const newResults = [...results];
-            newResults.splice(index, 1);
-            setResults(newResults);
-            if (newResults.length > 0) {
-                setSelectedResultId(newResults[0].id);
-            } else {
-                setSelectedResultId("");
-            }
+            setResults(prevResults => {
+                const newResults = [...prevResults];
+                newResults.splice(index, 1);
+
+                // Determine next selection
+                let nextResult = newResults[index];
+                if (!nextResult) {
+                    nextResult = newResults[index - 1];
+                }
+
+                if (nextResult) {
+                    if (filterSport === "All" || nextResult.sport === filterSport) {
+                        setSelectedResultId(nextResult.id);
+                    } else {
+                        const visibleResults = newResults.filter(r => r.sport === filterSport);
+                        setSelectedResultId(visibleResults.length > 0 ? visibleResults[0].id : "");
+                    }
+                } else {
+                    setSelectedResultId("");
+                }
+
+                return newResults;
+            });
         }
     };
 
@@ -145,7 +206,7 @@ export default function ManageResults() {
         formData.append('image', file);
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/upload`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, {
                 method: 'POST',
                 body: formData,
             });
@@ -163,7 +224,7 @@ export default function ManageResults() {
         }
     };
 
-    if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-slate-400">Loading...</div>;
+    if (loading) return <Loader />;
 
     const selectedResultIndex = results.findIndex(r => r.id === selectedResultId);
     const selectedResult = results[selectedResultIndex];
@@ -186,9 +247,18 @@ export default function ManageResults() {
                         </button>
                         <button
                             onClick={handleSave}
-                            className="bg-primary hover:bg-primary/90 text-black font-bold px-6 py-3 rounded-xl flex items-center transition-all shadow-lg shadow-primary/20"
+                            disabled={saving}
+                            className="bg-primary hover:bg-primary/90 text-black font-bold px-6 py-3 rounded-xl flex items-center transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <Save className="h-5 w-5 mr-2" /> Publish Live
+                            {saving ? (
+                                <>
+                                    <div className="h-5 w-5 mr-2 border-2 border-black border-t-transparent rounded-full animate-spin" /> Publish Live
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="h-5 w-5 mr-2" /> Publish Live
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>
@@ -223,7 +293,7 @@ export default function ManageResults() {
                             value={selectedResultId}
                             onValueChange={setSelectedResultId}
                             placeholder="Select a Match"
-                            options={(filterSport === "All" ? results : results.filter(r => r.sport === filterSport)).map(result => ({
+                            options={(filterSport === "All" ? results : results.filter(r => r.sport === filterSport)).map((result: Result) => ({
                                 value: result.id,
                                 label: `${result.teamA} vs ${result.teamB} (${result.category === 'Women' ? 'W' : result.category === 'Men' ? 'M' : 'X'})${result.date ? ` • ${new Date(result.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}`
                             }))}
@@ -255,7 +325,7 @@ export default function ManageResults() {
                                 <label className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 block">Date</label>
                                 <input
                                     type="date"
-                                    value={selectedResult.date}
+                                    value={selectedResult.date || ''}
                                     onChange={(e) => updateResult(selectedResultIndex, 'date', e.target.value)}
                                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
                                 />

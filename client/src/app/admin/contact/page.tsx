@@ -2,12 +2,33 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
+import Loader from '@/components/ui/Loader';
 import { Save, Plus, Trash, Upload, Link as LinkIcon, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+interface Coordinator {
+    name: string;
+    role: string;
+    phone: string;
+    image: string;
+    imageType: 'url' | 'upload';
+}
+
+interface ContactInfo {
+    email: string;
+    phone: string;
+    address: string;
+    socialMedia: {
+        instagram: string;
+        youtube: string;
+    };
+    coordinators: Coordinator[];
+}
+
 export default function ManageContact() {
-    const [contact, setContact] = useState<any>(null);
+    const [contact, setContact] = useState<ContactInfo | null>(null);
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
     const router = useRouter();
 
@@ -15,15 +36,25 @@ export default function ManageContact() {
         const token = localStorage.getItem('adminToken');
         if (!token) router.push('/admin/login');
 
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/contact`)
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/contact`)
             .then((res) => res.json())
             .then((data) => {
-                setContact(data);
+                // Ensure proper default structure
+                const defaultContact = {
+                    email: '',
+                    phone: '',
+                    address: '',
+                    coordinators: [],
+                    ...data,
+                    socialMedia: { instagram: '', youtube: '', ...(data?.socialMedia || {}) }
+                };
+                setContact(defaultContact);
                 setLoading(false);
             });
     }, [router]);
 
     const handleSave = async () => {
+        if (!contact) return;
         if (!contact.email || !contact.phone) {
             alert("Email and Phone are required.");
             return;
@@ -36,19 +67,29 @@ export default function ManageContact() {
             }
         }
 
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/contact`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(contact),
-        });
-        alert('Contact info saved successfully!');
+        setSaving(true);
+        try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/contact`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(contact),
+            });
+            alert('Contact info saved successfully!');
+        } catch (error) {
+            console.error('Error saving contact info:', error);
+            alert('Failed to save contact info.');
+        } finally {
+            setSaving(false);
+        }
     };
 
     const updateField = (field: string, value: string) => {
+        if (!contact) return;
         setContact({ ...contact, [field]: value });
     };
 
     const updateSocial = (platform: string, value: string) => {
+        if (!contact) return;
         setContact({
             ...contact,
             socialMedia: { ...contact.socialMedia, [platform]: value },
@@ -56,6 +97,7 @@ export default function ManageContact() {
     };
 
     const addCoordinator = () => {
+        if (!contact) return;
         const name = prompt("Enter Coordinator Name:");
         if (!name) return;
 
@@ -72,12 +114,14 @@ export default function ManageContact() {
     };
 
     const updateCoordinator = (index: number, field: string, value: string) => {
+        if (!contact) return;
         const newCoordinators = [...contact.coordinators];
-        newCoordinators[index][field] = value;
+        (newCoordinators[index] as any)[field] = value;
         setContact({ ...contact, coordinators: newCoordinators });
     };
 
     const removeCoordinator = (index: number) => {
+        if (!contact) return;
         const newCoordinators = [...contact.coordinators];
         newCoordinators.splice(index, 1);
         setContact({ ...contact, coordinators: newCoordinators });
@@ -91,7 +135,7 @@ export default function ManageContact() {
         formData.append('image', file);
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/upload`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, {
                 method: 'POST',
                 body: formData,
             });
@@ -109,35 +153,48 @@ export default function ManageContact() {
         }
     };
 
-    if (loading) return <div className="p-8 text-center text-slate-400">Loading...</div>;
+    if (loading) return <Loader />;
 
     return (
         <div className="min-h-screen bg-background text-foreground">
             <Navbar />
-            <main className="max-w-7xl mx-auto px-4 py-12">
+            <main className="max-w-4xl mx-auto px-4 py-12">
                 <div className="flex justify-between items-center mb-12">
                     <div>
-                        <h1 className="text-4xl font-bold text-white mb-2">Manage Contact Info</h1>
+                        <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 mb-2">
+                            Manage Contact Info
+                        </h1>
                         <p className="text-slate-400">Update contact details and coordinators</p>
                     </div>
                     <button
                         onClick={handleSave}
-                        className="bg-primary hover:bg-primary/90 text-black font-bold px-6 py-3 rounded-xl flex items-center transition-all shadow-lg shadow-primary/20"
+                        disabled={saving}
+                        className="bg-primary hover:bg-primary/90 text-black px-6 py-3 rounded-full font-bold flex items-center gap-2 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <Save className="h-5 w-5 mr-2" />
-                        Save Changes
+                        {saving ? (
+                            <>
+                                <div className="h-5 w-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                                Saving...
+                            </>
+                        ) : (
+                            <>
+                                <Save className="w-5 h-5" />
+                                Save Changes
+                            </>
+                        )}
                     </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-8">
                         <div className="bg-white/5 backdrop-blur-sm p-8 rounded-2xl border border-white/10">
-                            <h2 className="text-2xl font-bold text-white mb-6">General Info</h2>
+                            <h2 className="text-2xl font-bold text-primary mb-6">General Info</h2>
                             <div className="space-y-6">
                                 <div>
                                     <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 block">Email</label>
                                     <input
-                                        value={contact.email}
+                                        type="email"
+                                        value={contact?.email || ''}
                                         onChange={(e) => updateField('email', e.target.value)}
                                         className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
                                     />
@@ -145,7 +202,8 @@ export default function ManageContact() {
                                 <div>
                                     <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 block">Phone</label>
                                     <input
-                                        value={contact.phone}
+                                        type="text"
+                                        value={contact?.phone || ''}
                                         onChange={(e) => updateField('phone', e.target.value)}
                                         className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
                                     />
@@ -153,9 +211,9 @@ export default function ManageContact() {
                                 <div>
                                     <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 block">Address</label>
                                     <textarea
-                                        value={contact.address}
+                                        value={contact?.address || ''}
                                         onChange={(e) => updateField('address', e.target.value)}
-                                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
+                                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors h-24 resize-none"
                                         rows={3}
                                     />
                                 </div>
@@ -163,12 +221,13 @@ export default function ManageContact() {
                         </div>
 
                         <div className="bg-white/5 backdrop-blur-sm p-8 rounded-2xl border border-white/10">
-                            <h2 className="text-2xl font-bold text-white mb-6">Social Media</h2>
+                            <h2 className="text-2xl font-bold text-primary mb-6">Social Media</h2>
                             <div className="space-y-6">
                                 <div>
                                     <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 block">Instagram</label>
                                     <input
-                                        value={contact.socialMedia.instagram}
+                                        type="text"
+                                        value={contact?.socialMedia?.instagram || ''}
                                         onChange={(e) => updateSocial('instagram', e.target.value)}
                                         className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
                                     />
@@ -176,7 +235,8 @@ export default function ManageContact() {
                                 <div>
                                     <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 block">YouTube</label>
                                     <input
-                                        value={contact.socialMedia.youtube}
+                                        type="text"
+                                        value={contact?.socialMedia?.youtube || ''}
                                         onChange={(e) => updateSocial('youtube', e.target.value)}
                                         className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
                                     />
@@ -187,7 +247,7 @@ export default function ManageContact() {
 
                     <div className="bg-white/5 backdrop-blur-sm p-8 rounded-2xl border border-white/10 h-fit">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-white">Coordinators</h2>
+                            <h2 className="text-2xl font-bold text-primary">Coordinators</h2>
                             <button
                                 onClick={addCoordinator}
                                 className="text-primary hover:text-primary/80 text-sm font-bold flex items-center uppercase tracking-wider"
@@ -196,12 +256,12 @@ export default function ManageContact() {
                             </button>
                         </div>
                         <div className="space-y-4">
-                            {contact.coordinators && contact.coordinators.length === 0 && (
-                                <div className="text-center text-slate-500 py-8 bg-black/20 rounded-xl border border-white/5">
+                            {(!contact?.coordinators || contact.coordinators.length === 0) && (
+                                <div className="col-span-full text-center py-8 text-slate-500 bg-black/20 rounded-xl border border-white/5 border-dashed">
                                     No coordinators added yet. Click "Add" to create one.
                                 </div>
                             )}
-                            {contact.coordinators && contact.coordinators.map((coord: any, index: number) => (
+                            {contact?.coordinators && contact.coordinators.map((coord: Coordinator, index: number) => (
                                 <div key={index} className="p-6 bg-black/20 rounded-xl border border-white/5 relative hover:border-primary/30 transition-all">
                                     <button
                                         onClick={() => removeCoordinator(index)}

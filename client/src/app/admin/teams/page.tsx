@@ -2,13 +2,30 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
+import Loader from '@/components/ui/Loader';
 import { Save, Plus, Trash, Crown } from 'lucide-react';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { useRouter } from 'next/navigation';
 
+interface Member {
+    name: string;
+    year: string;
+    branch: string;
+    isCaptain: boolean;
+    image: string;
+}
+
+interface Team {
+    id: string;
+    name: string;
+    category: 'Men' | 'Women';
+    members: Member[];
+}
+
 export default function ManageTeams() {
-    const [teams, setTeams] = useState<any[]>([]);
+    const [teams, setTeams] = useState<Team[]>([]);
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
     const [selectedTeamId, setSelectedTeamId] = useState<string>("");
     const router = useRouter();
@@ -17,12 +34,17 @@ export default function ManageTeams() {
         const token = localStorage.getItem('adminToken');
         if (!token) router.push('/admin/login');
 
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/teams`)
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/teams`)
             .then((res) => res.json())
             .then((data) => {
-                setTeams(data);
-                if (data.length > 0) {
-                    setSelectedTeamId(data[0].id);
+                // Ensure all teams have a category (migration for existing data)
+                const teamsWithCategory = data.map((t: any) => ({
+                    ...t,
+                    category: t.category || 'Men'
+                }));
+                setTeams(teamsWithCategory);
+                if (teamsWithCategory.length > 0) {
+                    setSelectedTeamId(teamsWithCategory[0].id);
                 }
                 setLoading(false);
             });
@@ -46,18 +68,36 @@ export default function ManageTeams() {
             }
         }
 
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/teams`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(teams),
-        });
-        alert('Teams saved successfully!');
+        setSaving(true);
+        try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/teams`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(teams),
+            });
+            alert('Teams saved successfully!');
+        } catch (error) {
+            console.error('Error saving teams:', error);
+            alert('Failed to save teams.');
+        } finally {
+            setSaving(false);
+        }
     };
 
     const updateTeamName = (index: number, name: string) => {
-        const newTeams = [...teams];
-        newTeams[index].name = name;
-        setTeams(newTeams);
+        setTeams(prevTeams => {
+            const newTeams = [...prevTeams];
+            newTeams[index] = { ...newTeams[index], name };
+            return newTeams;
+        });
+    };
+
+    const updateTeamCategory = (index: number, category: 'Men' | 'Women') => {
+        setTeams(prevTeams => {
+            const newTeams = [...prevTeams];
+            newTeams[index] = { ...newTeams[index], category };
+            return newTeams;
+        });
     };
 
     const addTeam = () => {
@@ -68,9 +108,10 @@ export default function ManageTeams() {
         if (!memberName) return;
 
         const newTeamId = Date.now().toString();
-        const newTeam = {
+        const newTeam: Team = {
             id: newTeamId,
             name: teamName,
+            category: 'Men',
             members: [{ name: memberName, year: '1st Year', branch: 'CSE', isCaptain: true, image: '' }]
         };
 
@@ -78,38 +119,117 @@ export default function ManageTeams() {
         setSelectedTeamId(newTeamId);
     };
 
-    const removeTeam = (index: number) => {
-        if (confirm('Are you sure you want to delete this team?')) {
+    const removeTeam = async (index: number) => {
+        const teamToDelete = teams[index];
+        if (!confirm(`Are you sure you want to delete team "${teamToDelete.name}" (${teamToDelete.category})? This will IMMEDIATELY remove all associated data (matches, results, standings) and cannot be undone.`)) {
+            return;
+        }
+
+        setSaving(true);
+        try {
+            // 1. Fetch all related data
+            const [scheduleRes, resultsRes, standingsRes] = await Promise.all([
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/schedule`),
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/results`),
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/standings`)
+            ]);
+
+            const schedule = await scheduleRes.json();
+            const results = await resultsRes.json();
+            const standings = await standingsRes.json();
+
+            // 2. Filter out matches/results involving the team
+            const updatedSchedule = schedule.filter((m: any) => m.teamA !== teamToDelete.name && m.teamB !== teamToDelete.name);
+            const updatedResults = results.filter((r: any) => r.teamA !== teamToDelete.name && r.teamB !== teamToDelete.name);
+
+            // 3. Update standings (clear team name if present)
+            const updatedStandings = standings.map((s: any) => {
+                const newResults = { ...s.results };
+                if (newResults.first === teamToDelete.name) newResults.first = '';
+                if (newResults.second === teamToDelete.name) newResults.second = '';
+                if (newResults.third === teamToDelete.name) newResults.third = '';
+                if (newResults.fourth === teamToDelete.name) newResults.fourth = '';
+                return { ...s, results: newResults };
+            });
+
+            // 4. Save updated data
+            await Promise.all([
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/schedule`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedSchedule),
+                }),
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/results`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedResults),
+                }),
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/standings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedStandings),
+                })
+            ]);
+
+            // 5. Remove team locally and save
             const newTeams = [...teams];
             newTeams.splice(index, 1);
             setTeams(newTeams);
+
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/teams`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newTeams),
+            });
+
             if (newTeams.length > 0) {
                 setSelectedTeamId(newTeams[0].id);
             } else {
                 setSelectedTeamId("");
             }
+
+            alert('Team and associated data deleted successfully!');
+        } catch (error) {
+            console.error("Error deleting team:", error);
+            alert("Failed to delete team and associated data.");
+        } finally {
+            setSaving(false);
         }
     };
 
     const addMember = (teamIndex: number) => {
-        const newTeams = [...teams];
-        newTeams[teamIndex].members.unshift({ name: '', year: '', branch: '', isCaptain: false, image: '' });
-        setTeams(newTeams);
+        setTeams(prevTeams => {
+            const newTeams = [...prevTeams];
+            const newMembers = [{ name: '', year: '', branch: '', isCaptain: false, image: '' }, ...newTeams[teamIndex].members];
+            newTeams[teamIndex] = { ...newTeams[teamIndex], members: newMembers };
+            return newTeams;
+        });
     };
 
     const updateMember = (teamIndex: number, memberIndex: number, field: string, value: string) => {
-        const newTeams = [...teams];
-        newTeams[teamIndex].members[memberIndex][field] = value;
-        setTeams(newTeams);
+        setTeams(prevTeams => {
+            const newTeams = [...prevTeams];
+            const newTeam = { ...newTeams[teamIndex] };
+            const newMembers = [...newTeam.members];
+            newMembers[memberIndex] = { ...newMembers[memberIndex], [field]: value };
+            newTeam.members = newMembers;
+            newTeams[teamIndex] = newTeam;
+            return newTeams;
+        });
     };
 
     const toggleCaptain = (teamIndex: number, memberIndex: number) => {
-        const newTeams = [...teams];
-        // Unset captain for all other members in the team
-        newTeams[teamIndex].members.forEach((member: any, idx: number) => {
-            member.isCaptain = idx === memberIndex;
+        setTeams(prevTeams => {
+            const newTeams = [...prevTeams];
+            const newTeam = { ...newTeams[teamIndex] };
+            const newMembers = newTeam.members.map((member, idx) => ({
+                ...member,
+                isCaptain: idx === memberIndex
+            }));
+            newTeam.members = newMembers;
+            newTeams[teamIndex] = newTeam;
+            return newTeams;
         });
-        setTeams(newTeams);
     };
 
     const removeMember = (teamIndex: number, memberIndex: number) => {
@@ -117,13 +237,21 @@ export default function ManageTeams() {
             alert("A team must have at least one member.");
             return;
         }
-        const newTeams = [...teams];
-        newTeams[teamIndex].members.splice(memberIndex, 1);
-        // If we removed the captain, make the first member captain
-        if (newTeams[teamIndex].members.length > 0 && !newTeams[teamIndex].members.some((m: any) => m.isCaptain)) {
-            newTeams[teamIndex].members[0].isCaptain = true;
-        }
-        setTeams(newTeams);
+        setTeams(prevTeams => {
+            const newTeams = [...prevTeams];
+            const newTeam = { ...newTeams[teamIndex] };
+            const newMembers = [...newTeam.members];
+            newMembers.splice(memberIndex, 1);
+
+            // If we removed the captain, make the first member captain
+            if (newMembers.length > 0 && !newMembers.some(m => m.isCaptain)) {
+                newMembers[0] = { ...newMembers[0], isCaptain: true };
+            }
+
+            newTeam.members = newMembers;
+            newTeams[teamIndex] = newTeam;
+            return newTeams;
+        });
     };
 
     const handleFileUpload = async (teamIndex: number, memberIndex: number, file: File) => {
@@ -135,7 +263,7 @@ export default function ManageTeams() {
         formData.append('image', file);
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/upload`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, {
                 method: 'POST',
                 body: formData,
             });
@@ -153,7 +281,7 @@ export default function ManageTeams() {
         }
     };
 
-    if (loading) return <div className="p-8 text-center text-slate-400">Loading...</div>;
+    if (loading) return <Loader />;
 
     const selectedTeamIndex = teams.findIndex(t => t.id === selectedTeamId);
     const selectedTeam = teams[selectedTeamIndex];
@@ -177,10 +305,20 @@ export default function ManageTeams() {
                         </button>
                         <button
                             onClick={handleSave}
-                            className="bg-primary hover:bg-primary/90 text-black font-bold px-6 py-3 rounded-xl flex items-center transition-all shadow-lg shadow-primary/20"
+                            disabled={saving}
+                            className="bg-primary hover:bg-primary/90 text-black font-bold px-6 py-3 rounded-xl flex items-center transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <Save className="h-5 w-5 mr-2" />
-                            Save Changes
+                            {saving ? (
+                                <>
+                                    <div className="h-5 w-5 mr-2 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="h-5 w-5 mr-2" />
+                                    Save Changes
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>
@@ -192,7 +330,7 @@ export default function ManageTeams() {
                         value={selectedTeamId}
                         onValueChange={setSelectedTeamId}
                         placeholder="Select a Team"
-                        options={teams.map(team => ({ value: team.id, label: team.name }))}
+                        options={teams.map((team: Team) => ({ value: team.id, label: `${team.name} (${team.category})` }))}
                         className="w-full md:w-1/3"
                     />
                 </div>
@@ -202,18 +340,36 @@ export default function ManageTeams() {
                         {/* Header */}
                         <div className="bg-black/30 p-6 border-b border-white/10">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-4 flex-1">
                                     <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-2xl font-bold text-primary">
                                         {selectedTeam.name?.charAt(0) || 'T'}
                                     </div>
-                                    <div>
+                                    <div className="flex-1">
                                         <input
                                             value={selectedTeam.name}
                                             onChange={(e) => updateTeamName(selectedTeamIndex, e.target.value)}
-                                            className="bg-transparent text-2xl font-bold text-white focus:outline-none border-b border-transparent focus:border-primary transition-colors w-full"
+                                            className="bg-transparent text-2xl font-bold text-white focus:outline-none border-b border-transparent focus:border-primary transition-colors w-full mb-2"
                                             placeholder="Enter Team Name"
                                         />
-                                        <p className="text-slate-400 text-sm mt-1">{selectedTeam.members.length} members</p>
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex bg-black/40 rounded-lg p-1 border border-white/10">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateTeamCategory(selectedTeamIndex, 'Men')}
+                                                    className={`px-3 py-1 rounded-md text-sm font-bold transition-all ${selectedTeam.category === 'Men' ? 'bg-primary text-black' : 'text-slate-400 hover:text-white'}`}
+                                                >
+                                                    Men
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateTeamCategory(selectedTeamIndex, 'Women')}
+                                                    className={`px-3 py-1 rounded-md text-sm font-bold transition-all ${selectedTeam.category === 'Women' ? 'bg-primary text-black' : 'text-slate-400 hover:text-white'}`}
+                                                >
+                                                    Women
+                                                </button>
+                                            </div>
+                                            <p className="text-slate-400 text-sm">{selectedTeam.members.length} members</p>
+                                        </div>
                                     </div>
                                 </div>
                                 <button
@@ -240,7 +396,7 @@ export default function ManageTeams() {
                             </div>
 
                             <div className="space-y-3">
-                                {selectedTeam.members.map((member: any, memberIndex: number) => (
+                                {selectedTeam.members.map((member: Member, memberIndex: number) => (
                                     <div
                                         key={memberIndex}
                                         className={`bg-gradient-to-r ${member.isCaptain ? 'from-yellow-500/10 to-transparent border-yellow-500/20' : 'from-white/5 to-transparent border-white/5'} p-4 rounded-xl border transition-all hover:border-white/20`}

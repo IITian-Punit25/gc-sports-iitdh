@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
+import Loader from '@/components/ui/Loader';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { Save, Plus, Trash, Calendar, Clock, MapPin } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -23,10 +24,27 @@ const SPORTS = [
 
 const CATEGORIES = ['Men', 'Women', 'Mixed'];
 
+interface Team {
+    id: string;
+    name: string;
+}
+
+interface Match {
+    id: string;
+    sport: string;
+    category: string;
+    teamA: string;
+    teamB: string;
+    date: string;
+    time: string;
+    venue: string;
+}
+
 export default function ManageSchedule() {
-    const [schedule, setSchedule] = useState<any[]>([]);
-    const [teams, setTeams] = useState<any[]>([]);
+    const [schedule, setSchedule] = useState<Match[]>([]);
+    const [teams, setTeams] = useState<Team[]>([]);
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [selectedMatchId, setSelectedMatchId] = useState<string>("");
     const [filterSport, setFilterSport] = useState<string>("All");
     const router = useRouter();
@@ -38,17 +56,26 @@ export default function ManageSchedule() {
         const fetchData = async () => {
             try {
                 const [scheduleRes, teamsRes] = await Promise.all([
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/schedule`),
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/teams`)
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/schedule`),
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/teams`)
                 ]);
 
                 const scheduleData = await scheduleRes.json();
                 const teamsData = await teamsRes.json();
 
-                setSchedule(scheduleData);
+                // Ensure all matches have required fields
+                const sanitizedSchedule = scheduleData.map((match: any) => ({
+                    ...match,
+                    date: match.date || '',
+                    time: match.time || '',
+                    venue: match.venue || '',
+                    category: match.category || 'Men'
+                }));
+
+                setSchedule(sanitizedSchedule);
                 setTeams(teamsData);
-                if (scheduleData.length > 0) {
-                    setSelectedMatchId(scheduleData[0].id);
+                if (sanitizedSchedule.length > 0) {
+                    setSelectedMatchId(sanitizedSchedule[0].id);
                 }
                 setLoading(false);
             } catch (error) {
@@ -63,25 +90,33 @@ export default function ManageSchedule() {
     const handleSave = async () => {
         for (const match of schedule) {
             if (!match.teamA || !match.teamB) {
-                alert("Both Team A and Team B must be selected for all matches.");
+                alert(`Match between ${match.teamA || 'Unknown'} and ${match.teamB || 'Unknown'} must have both teams selected.`);
                 return;
             }
             if (match.teamA === match.teamB) {
-                alert("Team A and Team B cannot be the same.");
+                alert(`Team A and Team B cannot be the same for match between ${match.teamA} and ${match.teamB}.`);
                 return;
             }
             if (!match.date || !match.time || !match.venue) {
-                alert("Date, Time, and Venue are required for all matches.");
+                alert(`Date, Time, and Venue are required for match between ${match.teamA} and ${match.teamB} (${match.sport}).`);
                 return;
             }
         }
 
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/schedule`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(schedule),
-        });
-        alert('Schedule saved successfully!');
+        setSaving(true);
+        try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/schedule`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(schedule),
+            });
+            alert('Schedule saved successfully!');
+        } catch (error) {
+            console.error('Error saving schedule:', error);
+            alert('Failed to save schedule.');
+        } finally {
+            setSaving(false);
+        }
     };
 
     const addMatch = () => {
@@ -102,25 +137,44 @@ export default function ManageSchedule() {
     };
 
     const updateMatch = (index: number, field: string, value: string) => {
-        const newSchedule = [...schedule];
-        newSchedule[index][field] = value;
-        setSchedule(newSchedule);
+        setSchedule(prevSchedule => {
+            const newSchedule = [...prevSchedule];
+            newSchedule[index] = { ...newSchedule[index], [field]: value };
+            return newSchedule;
+        });
     };
 
     const removeMatch = (index: number) => {
+        if (index === -1) return;
         if (confirm('Are you sure you want to delete this match?')) {
             const newSchedule = [...schedule];
             newSchedule.splice(index, 1);
             setSchedule(newSchedule);
-            if (newSchedule.length > 0) {
-                setSelectedMatchId(newSchedule[0].id);
+
+            // Determine next selection
+            // Try to select the item at the same index (which is the next item)
+            // If that doesn't exist (we deleted the last one), select the previous one
+            let nextMatch = newSchedule[index];
+            if (!nextMatch) {
+                nextMatch = newSchedule[index - 1];
+            }
+
+            if (nextMatch) {
+                // If filter is active, ensure the selected match is visible
+                if (filterSport === "All" || nextMatch.sport === filterSport) {
+                    setSelectedMatchId(nextMatch.id);
+                } else {
+                    // If next match is not visible, fallback to first visible match
+                    const visibleMatches = newSchedule.filter(m => m.sport === filterSport);
+                    setSelectedMatchId(visibleMatches.length > 0 ? visibleMatches[0].id : "");
+                }
             } else {
                 setSelectedMatchId("");
             }
         }
     };
 
-    if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-slate-400">Loading...</div>;
+    if (loading) return <Loader />;
 
     const selectedMatchIndex = schedule.findIndex(m => m.id === selectedMatchId);
     const selectedMatch = schedule[selectedMatchIndex];
@@ -143,9 +197,18 @@ export default function ManageSchedule() {
                         </button>
                         <button
                             onClick={handleSave}
-                            className="bg-primary hover:bg-primary/90 text-black font-bold px-6 py-3 rounded-xl flex items-center transition-all shadow-lg shadow-primary/20"
+                            disabled={saving}
+                            className="bg-primary hover:bg-primary/90 text-black font-bold px-6 py-3 rounded-xl flex items-center transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <Save className="h-5 w-5 mr-2" /> Save Changes
+                            {saving ? (
+                                <>
+                                    <div className="h-5 w-5 mr-2 border-2 border-black border-t-transparent rounded-full animate-spin" /> Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="h-5 w-5 mr-2" /> Save Changes
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>
@@ -181,7 +244,7 @@ export default function ManageSchedule() {
                             value={selectedMatchId}
                             onValueChange={setSelectedMatchId}
                             placeholder="Select a Match"
-                            options={(filterSport === "All" ? schedule : schedule.filter(m => m.sport === filterSport)).map(match => ({
+                            options={(filterSport === "All" ? schedule : schedule.filter(m => m.sport === filterSport)).map((match: Match) => ({
                                 value: match.id,
                                 label: `${match.teamA} vs ${match.teamB} (${match.category === 'Women' ? 'W' : match.category === 'Men' ? 'M' : 'X'})${match.date ? ` • ${new Date(match.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}`
                             }))}
@@ -243,7 +306,7 @@ export default function ManageSchedule() {
                                         </label>
                                         <input
                                             type="date"
-                                            value={selectedMatch.date}
+                                            value={selectedMatch.date || ''}
                                             onChange={(e) => updateMatch(selectedMatchIndex, 'date', e.target.value)}
                                             className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
                                         />
@@ -254,7 +317,7 @@ export default function ManageSchedule() {
                                         </label>
                                         <input
                                             type="time"
-                                            value={selectedMatch.time}
+                                            value={selectedMatch.time || ''}
                                             onChange={(e) => updateMatch(selectedMatchIndex, 'time', e.target.value)}
                                             className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
                                         />
@@ -274,7 +337,7 @@ export default function ManageSchedule() {
                                                     value={selectedMatch.teamA}
                                                     onValueChange={(val) => updateMatch(selectedMatchIndex, 'teamA', val)}
                                                     placeholder="Select Team"
-                                                    options={teams.filter(t => t.name !== selectedMatch.teamB).map(t => ({ value: t.name, label: t.name }))}
+                                                    options={teams.filter((t: Team) => t.name !== selectedMatch.teamB).map((t: Team) => ({ value: t.name, label: t.name }))}
                                                 />
                                             </div>
                                         </div>
@@ -290,7 +353,7 @@ export default function ManageSchedule() {
                                                     value={selectedMatch.teamB}
                                                     onValueChange={(val) => updateMatch(selectedMatchIndex, 'teamB', val)}
                                                     placeholder="Select Team"
-                                                    options={teams.filter(t => t.name !== selectedMatch.teamA).map(t => ({ value: t.name, label: t.name }))}
+                                                    options={teams.filter((t: Team) => t.name !== selectedMatch.teamA).map((t: Team) => ({ value: t.name, label: t.name }))}
                                                 />
                                             </div>
                                         </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
+import Loader from '@/components/ui/Loader';
 import { Mail, Phone, MapPin, Instagram, Youtube } from 'lucide-react';
 import { io } from 'socket.io-client';
 
@@ -11,7 +12,7 @@ export default function ContactPage() {
 
     const fetchContact = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/contact`);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/contact`);
             const data = await res.json();
             setContact(data);
             setLoading(false);
@@ -24,7 +25,7 @@ export default function ContactPage() {
     useEffect(() => {
         fetchContact();
 
-        const socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000');
+        const socket = io(process.env.NEXT_PUBLIC_API_URL);
 
         socket.on('dataUpdate', (data: { type: string }) => {
             if (data.type === 'contact') {
@@ -52,7 +53,7 @@ export default function ContactPage() {
                 </div>
 
                 {loading || !contact ? (
-                    <div className="text-center text-slate-400 py-12">Loading contact info...</div>
+                    <Loader />
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Contact Info */}
